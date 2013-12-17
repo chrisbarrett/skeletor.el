@@ -339,7 +339,6 @@ Performs the substitutions specified by REPLACEMENTS."
     (kill-buffer)))
 
 (define-project-skeleton "python-library"
-  :default-license (rx bol "bsd")
   :replacements '(("__PYTHON-BIN__" . skel-py--read-python-bin))
   :after-creation
   (lambda (dir)

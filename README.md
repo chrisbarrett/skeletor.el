@@ -1,7 +1,7 @@
 # skeletor.el
 
-Skeletor allows you to easily create project templates in Emacs. It comes with a
-number of predefined templates and allows you to easily create your own.
+Skeletor adds support for project templates in Emacs. It comes with a number of
+predefined templates and allows you to easily create your own.
 
 ![Skeletor Laughing](assets/skeletor.jpg)
 

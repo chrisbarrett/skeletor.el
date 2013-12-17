@@ -2,7 +2,7 @@
 #+AUTHOR: __USER-NAME__
 
 * Summary
-TODO
+__DESCRIPTION__
 
 * Contributing
 Yes, please do! See CONTRIBUTING for guidelines.

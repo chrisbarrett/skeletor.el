@@ -52,7 +52,7 @@ $(PKG_DIR) : Cask
 
 # Create a tar that can be installed by package.el
 .PHONY: package
-package : $(PACKAGE_TAR)
+package : clean-skeletons $(PACKAGE_TAR)
 $(PACKAGE_TAR) : $(PACKAGE_SRCS)
 	rm -rf skeletor-$(VERSION)
 	mkdir -p skeletor-$(VERSION)
@@ -72,11 +72,17 @@ clean-all : clean clean-pkgdir
 
 # Clean generated files.
 .PHONY: clean
-clean : $(clean-doc)
+clean : clean-skeletons
 	rm -f $(OBJECTS)
 	rm -rf skeletor-*.tar skeletor-pkg.el
 	rm -f $(DOC_TEXI)
 	rm -f $(INFO_MANUAL)
+
+# Clean files generated in the project skeletons.
+.PHONY: clean-skeletons
+clean-skeletons :
+	rm -f $(SKELETONS)/elisp-package/**.elc
+	rm -f $(SKELETONS)/python-project/**.pyc
 
 # Remove packages installed by Cask.
 .PHONY: clean-pkgdir

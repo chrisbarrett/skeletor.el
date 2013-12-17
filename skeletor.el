@@ -214,9 +214,11 @@ Performs the substitutions specified by REPLACEMENTS."
 * DIR is an unquoted path at which to run the command.
 
 * COMMAND is the shell command to execute."
-  (shell-command
-   (format "cd %s && %s" (shell-quote-argument dir) command)
-   (format "*Skeleton Shell Output [%s]*" dir)))
+  (let ((buf (format "*Skeleton Shell Output [%s]*" dir)))
+    (erase-buffer buf)
+    (shell-command
+     (format "cd %s && %s" (shell-quote-argument dir) command)
+     buf)))
 
 (defun skel--async-shell-command (dir command)
   "Run an async shell command.
@@ -224,9 +226,12 @@ Performs the substitutions specified by REPLACEMENTS."
 * DIR is an unquoted path at which to run the command.
 
 * COMMAND is the shell command to execute."
-  (async-shell-command
-   (format "cd %s && %s" (shell-quote-argument dir) command)
-   (generate-new-buffer-name (format "*Skeleton Shell Output [%s]*" dir))))
+  (let ((buf (generate-new-buffer-name
+              (format "*Skeleton Shell Output [%s]*" dir))))
+    (erase-buffer buf)
+    (async-shell-command
+     (format "cd %s && %s" (shell-quote-argument dir) command)
+     buf)))
 
 (defun skel--initialize-git-repo  (dir)
   "Initialise a new git repository at DIR."

@@ -216,7 +216,8 @@ Performs the substitutions specified by REPLACEMENTS."
     (message "Initialising git...")
     (shell-command
      (format "cd %s && git init && git add -A && git commit -m 'Initial commit'"
-             (shell-quote-argument dir)))
+             (shell-quote-argument dir))
+     (generate-new-buffer-name skel--shell-buffer-name))
     (message "Initialising git...done")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;; User commands ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -301,7 +302,8 @@ Performs the substitutions specified by REPLACEMENTS."
   :after-creation
   (lambda (dir)
     (async-shell-command
-     (concat "cd" (shell-quote-argument dir) "&& make env"))))
+     (format "cd %s && make env" (shell-quote-argument dir))
+     skel--shell-buffer-name)))
 
 (defun skel-py--read-python-bin (dir)
   "Initialise a virtualenv environment at DIR."

@@ -303,7 +303,7 @@ Evaluates the cdr of each item in the alist according to the following rules:
 (defun skel-py--read-python-bin (dir)
   "Initialise a virtualenv environment at DIR."
   (message "Finding python binaries...")
-  (->> skel-py--python-bin-search-path
+  (->> skel-python-bin-search-path
     (--mapcat
      (f-files it (lambda (f)
                    (s-matches? (rx "python" (* (any digit "." "-")) eol)

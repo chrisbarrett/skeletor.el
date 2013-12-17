@@ -97,6 +97,19 @@ project."
   :group 'skeletor
   :type 'hook)
 
+(defgroup skeletor-python nil
+  "Configuration for python projects in skeletor."
+  :group 'tools
+  :prefix "skel-python-")
+
+(defcustom skel-python-bin-search-path '("/usr/bin" "/usr/local/bin")
+  "A list of paths to search for python binaries.
+
+Python binaries found in these paths will be shown as canditates
+when initialising virtualenv."
+  :group 'skeletor-python
+  :type '(repeat directory))
+
 ;;;;;;;;;;;;;;;;;;;;;;;; Internal ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar skel-directory
@@ -284,9 +297,6 @@ Evaluates the cdr of each item in the alist according to the following rules:
   (lambda (dir)
     (async-shell-command
      (concat "cd" (shell-quote-argument dir) "&& make env"))))
-
-(defvar skel-py--python-bin-search-path '("/usr/bin" "/usr/local/bin")
-  "A list of paths to search for python binaries.")
 
 (defun skel-py--read-python-bin (dir)
   "Initialise a virtualenv environment at DIR."

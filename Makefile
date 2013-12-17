@@ -95,6 +95,7 @@ clean : clean-skeletons
 clean-skeletons :
 	rm -f $(SKELETONS)/elisp-package/**.elc
 	rm -f $(SKELETONS)/python-project/**.pyc
+	rm -f $(SKELETONS)/haskell*/**/.hdevtools.sock
 
 # Remove packages installed by Cask.
 .PHONY: clean-pkgdir

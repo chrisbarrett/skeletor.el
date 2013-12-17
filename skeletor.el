@@ -359,6 +359,44 @@ Performs the substitutions specified by REPLACEMENTS."
     (skel-py--create-virtualenv-dirlocals dir)
     (skel--async-shell-command dir "make tooling")))
 
+(defvar skel-hs--haskell-categories
+  (list "Codec" "Concurrency" "Control" "Data" "Database" "Development"
+        "Distribution" "Game" "Graphics" "Language" "Math" "Network"
+        "Sound" "System" "Testing" "Text" "Web")
+  "List of Haskell project categories.")
+
+(defvar skel-hs--haskell-language-versions
+  (list "Haskell2010" "Haskell98")
+  "List of Haskell language versions.")
+
+(defun skel-hs--cabal-sandboxes-supported? ()
+  "Non-nil if the installed cabal version supports sandboxes.
+Sandboxes were introduced in cabal 1.18 ."
+  (let ((vers (->> (shell-command-to-string "cabal --version")
+                (s-match (rx (+ (any num "."))))
+                car
+                (s-split (rx "."))
+                (-map 'string-to-int))))
+    (cl-destructuring-bind (maj min &rest rest) vers
+      (or (< 1 maj) (<= 18 min)))))
+
+(define-project-skeleton "haskell-executable"
+  :license-file-name "LICENSE"
+  :replacements
+  '(("__SYNOPSIS__"
+     . (lambda ()
+         (read-string "Synopsis: ")))
+    ("__HASKELL-LANGUAGE-VERSION__"
+     . (lambda ()
+         (ido-completing-read "Language: " skel-hs--haskell-language-versions)))
+    ("__PROJECT-CATEGORY__"
+     . (lambda ()
+         (ido-completing-read "Category: " skel-hs--haskell-categories))))
+  :after-creation
+  (lambda (dir)
+    (when (skel-hs--cabal-sandboxes-supported?)
+      (message "Initialising sandbox...")
+      (skel--async-shell-command dir "cabal sandbox init"))))
 
 (provide 'skeletor)
 

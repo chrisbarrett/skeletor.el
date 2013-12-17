@@ -1,11 +1,10 @@
-#+TITLE: __PROJECT-NAME__
-#+AUTHOR: __USER-NAME__
+# __PROJECT-NAME__
 
-* Summary
+## Summary
 TODO
 
-* Contributing
+## Contributing
 Yes, please do! See CONTRIBUTING for guidelines.
 
-* License
+## License
 See COPYING. Copyright (c) __YEAR__ __USER-NAME__.

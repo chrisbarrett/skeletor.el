@@ -1,5 +1,7 @@
 CWD          = $(shell pwd)
 DOC          = $(CWD)/doc
+SKELETONS    = $(CWD)/project-skeletons
+LICENSES     = $(CWD)/licenses
 EMACS       ?= emacs
 EMACSFLAGS   = --batch -Q
 CASK         = cask
@@ -55,6 +57,8 @@ $(PACKAGE_TAR) : $(PACKAGE_SRCS)
 	rm -rf skeletor-$(VERSION)
 	mkdir -p skeletor-$(VERSION)
 	cp -f $(PACKAGE_SRCS) skeletor-$(VERSION)
+	cp -Rf $(SKELETONS) skeletor-$(VERSION)
+	cp -Rf $(LICENSES) skeletor-$(VERSION)
 	tar cf $(PACKAGE_TAR) skeletor-$(VERSION)
 	rm -rf skeletor-$(VERSION)
 

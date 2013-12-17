@@ -310,9 +310,8 @@ Performs the substitutions specified by REPLACEMENTS."
      (format "cd %s && make env" (shell-quote-argument dir))
      skel--shell-buffer-name)))
 
-(defun skel-py--read-python-bin (dir)
-  "Initialise a virtualenv environment at DIR."
-  (message "Finding python binaries...")
+(defun skel-py--read-python-bin ()
+  "Read a python binary from the user."
   (->> skel-python-bin-search-path
     (--mapcat
      (f-files it (lambda (f)
@@ -333,6 +332,7 @@ Performs the substitutions specified by REPLACEMENTS."
   :replacements '(("__PYTHON-BIN__" . skel-py--read-python-bin))
   :after-creation
   (lambda (dir)
+    (message "Finding python binaries...")
     (skel-py--create-virtualenv-dirlocals dir)
     (async-shell-command
      (format "cd %s && make tooling" (shell-quote-argument dir))

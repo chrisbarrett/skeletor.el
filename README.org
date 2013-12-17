@@ -1,19 +1,19 @@
-#+TITLE: Skeletor
 #+AUTHOR: Chris Barrett
+* skeletor.el
 
 [[file:assets/skeletor.jpg]]
 
 Skeletor allows you to easily create project templates in Emacs. It comes with a
 number of predefined templates and allows you to easily create your own.
 
-* Creating Projects
+** Creating Projects
 Use =M-x create-project= to create a new project based on an existing template.
 You will be guided through any configuration needed.
 
 By default, new projects are created in =~/Projects=. Customise
 =skel-project-directory= to change this.
 
-* Installation
+** Installation
 You will need Emacs 24+, =make= and [[https://github.com/cask/cask][Cask]] to build the project.
 #+begin_example
 cd
@@ -22,8 +22,8 @@ cd skeletor
 make && make install
 #+end_example
 
-* Defining Project Templates
-** Structure
+** Defining Project Templates
+*** Structure
 There are two simple parts to defining a new project:
 
 1. Create a template directory in the =skel-user-directory=, containing any
@@ -56,7 +56,7 @@ And here's the corresponding definition:
      skel--shell-buffer-name)))
 #+end_src
 
-** Token Expansion
+*** Token Expansion
 
 Filenames and file contents may contain special tokens that will be expanded
 when the project is created. For example, a template file with the contents:
@@ -79,9 +79,9 @@ The variable =skel-global-replacements= defines the replacements available in
 all project templates, and each template may declare its own special
 replacements.
 
-* Contributing
+** Contributing
 Yes, please do! More project types are especially welcome. Read over
 CONTRIBUTING for guidelines.
 
-* License
+** License
 See COPYING. Copyright (c) 2013 Chris Barrett.

@@ -9,18 +9,16 @@ number of predefined templates and allows you to easily create your own.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. skeletor.el</a>
+<li><a href="#sec-1">1. Installation</a></li>
+<li><a href="#sec-2">2. Creating Projects</a></li>
+<li><a href="#sec-3">3. Defining Project Templates</a>
 <ul>
-<li><a href="#sec-1-1">1.1. Installation</a></li>
-<li><a href="#sec-1-2">1.2. Creating Projects</a></li>
-<li><a href="#sec-1-3">1.3. Defining Project Templates</a>
-<ul>
-<li><a href="#sec-1-3-1">1.3.1. Structure</a></li>
-<li><a href="#sec-1-3-2">1.3.2. Token Expansion</a></li>
+<li><a href="#sec-3-1">3.1. Structure</a></li>
+<li><a href="#sec-3-2">3.2. Token Expansion</a></li>
 </ul>
 </li>
-<li><a href="#sec-1-4">1.4. Contributing</a></li>
-<li><a href="#sec-1-5">1.5. License</a></li>
+<li><a href="#sec-4">4. Contributing</a></li>
+<li><a href="#sec-5">5. License</a></li>
 </ul>
 </li>
 </ul>

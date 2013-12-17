@@ -20,7 +20,7 @@ There are two simple parts to defining a new project:
 2. Use the =define-project-skeleton= macro to configure how the project template
    will be created. Here's a simplified version of the elisp
 
-For example, here's the directory structure of the elisp-project skeleton:
+For example, here's the directory structure of the elisp-package skeleton:
 #+begin_example
 elisp-package/
 |-- CONTRIBUTING.org

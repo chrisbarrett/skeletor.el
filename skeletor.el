@@ -302,6 +302,8 @@ Performs the substitutions specified by REPLACEMENTS."
 
 (define-project-skeleton "elisp-package"
   :default-license (rx bol "gpl")
+  :replacements '(("__DESCRIPTION__" . (lambda ()
+                                         (read-string "Description: "))))
   :after-creation
   (lambda (dir)
     (async-shell-command

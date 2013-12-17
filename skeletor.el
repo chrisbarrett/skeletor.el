@@ -265,7 +265,7 @@ Performs the substitutions specified by REPLACEMENTS."
 (cl-defmacro define-project-skeleton (name
                                       &key
                                       replacements
-                                      after-creation
+                                      (after-creation 'ignore)
                                       default-license
                                       (license-file-name "COPYING"))
   "Declare a new project type.
@@ -286,7 +286,7 @@ Performs the substitutions specified by REPLACEMENTS."
   (declare (indent 1))
   (cl-assert (or (symbolp name) (stringp name)) t)
   (cl-assert (stringp license-file-name) t)
-  (let ((constructor (intern (format "create-%s" name)))
+  (let ((constructor (intern (format "skel--create-%s" name)))
         (default-license-var (intern (format "%s-default-license" name)))
         (rs (eval replacements)))
     (cl-assert (listp rs) t)
@@ -331,7 +331,7 @@ Performs the substitutions specified by REPLACEMENTS."
                                            (f-join dest ,license-file-name) repls)
 
            (save-window-excursion
-             (funcall ,after-creation dest)
+             (funcall #',after-creation dest)
              (skel--initialize-git-repo dest)
              (run-hook-with-args 'skel-after-project-instantiated-hook default-directory))
            (message "Project created at %s" dest)))

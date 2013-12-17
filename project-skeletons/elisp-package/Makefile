@@ -2,7 +2,9 @@ CWD          = $(shell pwd)
 DOC          = $(CWD)/doc
 EMACS       ?= emacs
 EMACSFLAGS   = --batch -Q
+PYTHON       = python
 CASK         = cask
+CASK_URL     = https://raw.github.com/cask/cask/master/go
 VERSION     := $(shell EMACS=$(EMACS) $(CASK) version)
 PKG_DIR     := $(shell EMACS=$(EMACS) $(CASK) package-directory)
 USER_INIT_EL = ~/.emacs.d/init.el
@@ -16,7 +18,7 @@ PACKAGE_SRCS = $(SRCS) __PROJECT-NAME__-pkg.el $(INFO_MANUAL)
 PACKAGE_TAR  = __PROJECT-NAME__-$(VERSION).tar
 
 .PHONY: all
-all : env compile doc package
+all : env compile info dist
 
 # Configure tooling and environment.
 .PHONY: env
@@ -30,13 +32,13 @@ features : Cask
 compile : $(OBJECTS)
 
 # Run ecukes tests.
-.PHONY: test
-test : compile
+.PHONY: check
+check : compile
 	$(CASK) exec ecukes
 
 # Export the org documentation to an info manual.
-.PHONY: doc
-doc : $(INFO_MANUAL)
+.PHONY: info
+info : $(INFO_MANUAL)
 $(INFO_MANUAL) : $(DOC_ORG)
 	$(CASK) exec $(EMACS) $(EMACSFLAGS) \
 	-l org -l ox-texinfo \
@@ -49,8 +51,8 @@ $(PKG_DIR) : Cask
 	touch $(PKG_DIR)
 
 # Create a tar that can be installed by package.el
-.PHONY: package
-package : $(PACKAGE_TAR)
+.PHONY: dist
+dist : $(PACKAGE_TAR)
 $(PACKAGE_TAR) : $(PACKAGE_SRCS)
 	rm -rf __PROJECT-NAME__-$(VERSION)
 	mkdir -p __PROJECT-NAME__-$(VERSION)

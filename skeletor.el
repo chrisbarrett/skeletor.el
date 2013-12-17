@@ -278,9 +278,11 @@ Performs the substitutions specified by REPLACEMENTS."
 
            (skel--instantiate-template-directory ,name dest repls)
            (skel--instantiate-license-file license-file (f-join dest "COPYING") repls)
-           (funcall ,after-creation dest)
-           (skel--initialize-git-repo dest)
-           (run-hook-with-args 'skel-after-project-instantiated-hook default-directory)
+
+           (save-window-excursion
+             (funcall ,after-creation dest)
+             (skel--initialize-git-repo dest)
+             (run-hook-with-args 'skel-after-project-instantiated-hook default-directory))
            (message "Project created at %s" dest)))
 
        (add-to-list 'skel-project-skeletons (cons ,name ',constructor)))))
@@ -328,9 +330,7 @@ Performs the substitutions specified by REPLACEMENTS."
   :replacements '(("__PYTHON-BIN__" . skel-py--read-python-bin))
   :after-creation
   (lambda (dir)
-    (let ((inhibit-redisplay t))
-      (skel-py--create-virtualenv-dirlocals dir))
-
+    (skel-py--create-virtualenv-dirlocals dir)
     (async-shell-command
      (format "cd %s && make tooling" (shell-quote-argument dir))
      skel--shell-buffer-name)))

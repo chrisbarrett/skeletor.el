@@ -3,3 +3,4 @@ TAGS
 elpa
 doc/skeletor.texi
 doc/skeletor.info
+*-pkg.el

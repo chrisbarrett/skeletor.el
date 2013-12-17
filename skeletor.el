@@ -49,6 +49,56 @@
 (defvar skel-project-skeletons nil
   "The list of available project skeletons.")
 
+(defgroup skeletor nil
+  "Provides customisable project skeletons for Emacs."
+  :group 'tools
+  :prefix "skel-"
+  :link '(custom-manual "(skeletor)Top")
+  :link '(info-link "(skeletor)Usage"))
+
+(defcustom skel-user-directory (f-join user-emacs-directory "project-skeletons")
+  "The directory containing project skeletons.
+Each directory inside is available for instantiation as a project
+skeleton."
+  :group 'skeletor
+  :type 'directory)
+
+(defcustom skel-project-directory (f-join (getenv "HOME") "Projects")
+  "The directory where new projects will be created."
+  :group 'skeletor
+  :type 'directory)
+
+(defcustom skel-default-replacements
+  (list (cons "__YEAR__" (format-time-string "%Y"))
+        (cons "__USER-NAME__" user-full-name)
+        (cons "__USER-MAIL-ADDRESS__" user-mail-address)
+        (cons "__ORGANISATION__" (if (boundp 'user-organisation)
+                                     user-organisation
+                                   user-full-name)))
+  "A list of replacements available for expansion in project skeletons.
+
+Each alist element is comprised of (candidate . replacement),
+where 'candidate' will be substituted for 'replacement'.
+'replacement' may be a simple string, a variable that will be
+evaluated or a function that will be called."
+  :group 'skeletor
+  :type '(alist :key-type 'string
+                :value-type (choice string variable function)))
+
+(defcustom skel-init-with-git t
+  "When non-nil, initialise newly created projects with a git repository."
+  :group 'skeletor
+  :type 'boolean)
+
+(defcustom skel-after-project-instantiated-hook nil
+  "Hook run after a project is successfully instantiated.
+Each function will be passed the path of the newly instantiated
+project."
+  :group 'skeletor
+  :type 'hook)
+
+;;;;;;;;;;;;;;;;;;;;;;;; Internal ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defvar skel-directory
   (let ((pkg-root (f-dirname (or load-file-name (buffer-file-name)))))
     (f-join pkg-root "project-skeletons"))
@@ -56,35 +106,8 @@
 Each directory inside is available for instantiation as a project
 skeleton.")
 
-(defvar skel-user-directory (f-join user-emacs-directory "project-skeletons")
-  "The directory containing project skeletons.
-Each directory inside is available for instantiation as a project
-skeleton.")
-
 (defvar skel-license-directory (f-join skel-directory "licenses")
   "The directory containing license files for projects.")
-
-(defvar skel-project-folder (f-join (getenv "HOME") "Projects")
-  "The directory where projects will be created.")
-
-(defvar skel-default-replacements
-  (list (cons "__YEAR__" (format-time-string "%Y"))
-        (cons "__USER-NAME__" user-full-name)
-        (cons "__USER-MAIL-ADDRESS__" user-mail-address)
-        (cons "__ORGANISATION__" (if (boundp 'user-organisation)
-                                     user-organisation
-                                   user-full-name)))
-  "A list of replacements available for expansion in project skeletons.")
-
-(defvar skel-init-with-git t
-  "When non-nil, initialise newly created projects with a git repository.")
-
-(defvar skel-after-project-instantiated-hook nil
-  "Hook run after a project is successfully instantiated.
-Each function will be passed the path of the newly instantiated
-project.")
-
-;;;;;;;;;;;;;;;;;;;;;;;; Internal ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar skel--shell-buffer-name "*Skeleton Shell Output*"
   "The name of the buffer for displaying shell command output.")
@@ -228,7 +251,7 @@ Evaluates the cdr of each item in the alist according to the following rules:
          (interactive (list (read-string "Project name: ")
                             (skel-read-license "License: " (eval ,default-license-var))))
 
-         (let* ((dest (f-join skel-project-folder project-name))
+         (let* ((dest (f-join skel-project-directory project-name))
                 (default-directory dest)
                 (repls (-map 'skel--eval-replacements
                              (-concat (eval ',rs)

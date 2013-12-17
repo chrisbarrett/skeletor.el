@@ -68,14 +68,14 @@ skeleton."
   :group 'skeletor
   :type 'directory)
 
-(defcustom skel-default-replacements
+(defcustom skel-global-replacements
   (list (cons "__YEAR__" (format-time-string "%Y"))
         (cons "__USER-NAME__" user-full-name)
         (cons "__USER-MAIL-ADDRESS__" user-mail-address)
         (cons "__ORGANISATION__" (if (boundp 'user-organisation)
                                      user-organisation
                                    user-full-name)))
-  "A list of replacements available for expansion in project skeletons.
+  "A list of replacements available for expansion in all project skeletons.
 
 Each alist element is comprised of (candidate . replacement),
 where 'candidate' will be substituted for 'replacement'.
@@ -271,7 +271,7 @@ Evaluates the cdr of each item in the alist according to the following rules:
                 (repls (-map 'skel--eval-replacements
                              (-concat (eval ',rs)
                                       (list (cons "__PROJECT-NAME__" project-name))
-                                      skel-default-replacements))))
+                                      skel-global-replacements))))
 
            (skel--instantiate-template-directory ,name dest repls)
            (skel--instantiate-license-file license-file (f-join dest "COPYING") repls)

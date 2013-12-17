@@ -246,6 +246,19 @@ Performs the substitutions specified by REPLACEMENTS."
      dir "git init && git add -A && git commit -m 'Initial commit'")
     (message "Initialising git...done")))
 
+(cl-defun skel--read-project-name (&optional (prompt "Project Name: "))
+  "Read a project name from the user."
+  (let* ((name (read-string prompt))
+         (dest (f-join skel-project-directory name)))
+    (cond
+     ((s-blank? name)
+      (skel--read-project-name))
+     ((f-exists? dest)
+      (skel--read-project-name
+       (format "%s already exists. Choose a different name: " dest)))
+     (t
+      name))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;; User commands ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;###autoload
@@ -296,8 +309,10 @@ Performs the substitutions specified by REPLACEMENTS."
 
 * LICENSE-FILE is the path to a license file to be added to the project.")
 
-         (interactive (list (read-string "Project name: ")
-                            (skel-read-license "License: " (eval ,default-license-var))))
+         (interactive
+          (list (skel--read-project-name)
+                (skel-read-license "License: "
+                                   (eval ,default-license-var))))
 
          (let* ((dest (f-join skel-project-directory project-name))
                 (default-directory dest)

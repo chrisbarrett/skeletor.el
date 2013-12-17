@@ -300,7 +300,7 @@ Performs the substitutions specified by REPLACEMENTS."
                              (-concat
                               skel-global-replacements
                               (list (cons "__PROJECT-NAME__" project-name)
-                                    (cons "__LICENSE-FILE-NAME__" license-file-name))
+                                    (cons "__LICENSE-FILE-NAME__" ,license-file-name))
                               ',rs))))
 
            (unless (f-exists? skel-project-directory)

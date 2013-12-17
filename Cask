@@ -1,6 +1,7 @@
-(source "melpa" "http://melpa.milkbox.net/packages/")
+(source melpa)
+(source org)
 
 (package-file "skeletor.el")
 
 (development
- (depends-on "org"))
+ (depends-on "org-plus-contrib"))

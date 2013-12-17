@@ -208,7 +208,7 @@ Performs the substitutions specified by REPLACEMENTS."
                     (t
                      repl))))
 
-(defun skel--shell-command (dir command)
+(defun skel-shell-command (dir command)
   "Run a shell command.
 
 * DIR is an unquoted path at which to run the command.
@@ -220,7 +220,7 @@ Performs the substitutions specified by REPLACEMENTS."
      (format "cd %s && %s" (shell-quote-argument dir) command)
      buf)))
 
-(defun skel--async-shell-command (dir command)
+(defun skel-async-shell-command (dir command)
   "Run an async shell command.
 
 * DIR is an unquoted path at which to run the command.
@@ -237,7 +237,7 @@ Performs the substitutions specified by REPLACEMENTS."
   "Initialise a new git repository at DIR."
   (when skel-init-with-git
     (message "Initialising git...")
-    (skel--shell-command
+    (skel-shell-command
      dir "git init && git add -A && git commit -m 'Initial commit'")
     (message "Initialising git...done")))
 
@@ -338,7 +338,7 @@ Performs the substitutions specified by REPLACEMENTS."
          (read-string "Description: "))))
   :after-creation
   (lambda (dir)
-    (skel--async-shell-command dir "make env")))
+    (skel-async-shell-command dir "make env")))
 
 (defun skel-py--read-python-bin ()
   "Read a python binary from the user."
@@ -363,7 +363,7 @@ Performs the substitutions specified by REPLACEMENTS."
   (lambda (dir)
     (message "Finding python binaries...")
     (skel-py--create-virtualenv-dirlocals dir)
-    (skel--async-shell-command dir "make tooling")))
+    (skel-async-shell-command dir "make tooling")))
 
 (defvar skel-hs--haskell-categories
   (list "Codec" "Concurrency" "Control" "Data" "Database" "Development"
@@ -402,7 +402,7 @@ Sandboxes were introduced in cabal 1.18 ."
   (lambda (dir)
     (when (skel-hs--cabal-sandboxes-supported?)
       (message "Initialising sandbox...")
-      (skel--async-shell-command dir "cabal sandbox init"))))
+      (skel-async-shell-command dir "cabal sandbox init"))))
 
 (provide 'skeletor)
 

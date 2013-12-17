@@ -9,7 +9,9 @@ CASK         = cask
 CASK_URL     = https://raw.github.com/cask/cask/master/go
 VERSION     := $(shell EMACS=$(EMACS) $(CASK) version)
 PKG_DIR     := $(shell EMACS=$(EMACS) $(CASK) package-directory)
-USER_INIT_EL = ~/.emacs.d/init.el
+USER_EMACS_D = ~/.emacs.d
+USER_INIT_EL = $(USER_EMACS_D)/init.el
+USER_ELPA_D  = $(USER_EMACS_D)/elpa
 
 SRCS         = $(filter-out %-pkg.el, $(wildcard *.el))
 OBJECTS      = $(SRCS:.el=.elc)
@@ -67,6 +69,17 @@ $(PACKAGE_TAR) : $(PACKAGE_SRCS)
 # Install elisp packages with cask.
 .PHONY: packages
 packages : $(PKG_DIR)
+
+# Install the package to the user's Emacs dir.
+.PHONY: install
+install : dist
+	$(EMACS) $(EMACSFLAGS) -l package \
+	-f package-initialize  --eval '(package-install-file "$(CWD)/$(PACKAGE_TAR)")'
+
+# Uninstall the package.
+.PHONY: uninstall
+uninstall :
+	rm -rf $(USER_ELPA_D)/skeletor-*
 
 # Restore to pristine state.
 .PHONY: clean-all

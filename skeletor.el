@@ -223,9 +223,13 @@ Performs the substitutions specified by REPLACEMENTS."
 ;;;;;;;;;;;;;;;;;;;;;;;; User commands ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;###autoload
-(cl-defmacro define-project-skeleton
-    (name &key replacements after-creation default-license)
-  "Declare a new project type
+(cl-defmacro define-project-skeleton (name
+                                      &key
+                                      replacements
+                                      after-creation
+                                      default-license
+                                      (license-file-name "COPYING"))
+  "Declare a new project type.
 
 * NAME is a string naming the project type. A corresponding
   skeleton should exist in `skel--directory' or
@@ -242,6 +246,7 @@ Performs the substitutions specified by REPLACEMENTS."
   newly-created project."
   (declare (indent 1))
   (cl-assert (or (symbolp name) (stringp name)) t)
+  (cl-assert (stringp license-file-name) t)
   (let ((constructor (intern (format "create-%s" name)))
         (default-license-var (intern (format "%s-default-license" name)))
         (rs (eval replacements)))
@@ -278,7 +283,8 @@ Performs the substitutions specified by REPLACEMENTS."
              (f-mkdir skel-project-directory))
 
            (skel--instantiate-template-directory ,name dest repls)
-           (skel--instantiate-license-file license-file (f-join dest "COPYING") repls)
+           (skel--instantiate-license-file license-file
+                                           (f-join dest ,license-file-name) repls)
 
            (save-window-excursion
              (funcall ,after-creation dest)

@@ -193,23 +193,22 @@ Performs the substitutions specified by REPLACEMENTS."
          (choice (ido-completing-read prompt (-map 'car xs) nil t d)))
     (cdr (assoc choice xs))))
 
-(defun skel--eval-replacements (replacement-alist)
-  "Evaluate REPLACEMENT-ALIST.
-Evaluates the cdr of each item in the alist according to the following rules:
+(cl-defun skel--eval-replacement ((token . repl))
+  "Convert a replacement item according to the following rules:
+
 * If the item is a lambda-function or function-name it will be called
+
 * If it is a symbol will be eval'ed
+
 * Otherwise the item will be used unchanged."
-  (--map (cl-destructuring-bind (fst . snd) it
-           (cons fst
-                 (cond ((functionp snd)
-                        (if (commandp snd)
-                            (call-interactively snd)
-                          (funcall snd)))
-                       ((symbolp snd)
-                        (eval snd))
-                       (t
-                        snd))))
-         replacement-alist))
+  (cons token (cond ((functionp repl)
+                     (if (commandp repl)
+                         (call-interactively repl)
+                       (funcall repl)))
+                    ((symbolp repl)
+                     (eval repl))
+                    (t
+                     repl))))
 
 (defun skel--initialize-git-repo  (dir)
   "Initialise a new git repository at DIR."
@@ -268,7 +267,7 @@ Evaluates the cdr of each item in the alist according to the following rules:
 
          (let* ((dest (f-join skel-project-directory project-name))
                 (default-directory dest)
-                (repls (-map 'skel--eval-replacements
+                (repls (-map 'skel--eval-replacement
                              (-concat (eval ',rs)
                                       (list (cons "__PROJECT-NAME__" project-name))
                                       skel-global-replacements))))

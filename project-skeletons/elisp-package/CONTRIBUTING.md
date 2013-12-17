@@ -27,19 +27,21 @@ repository. Follow the guidelines below to make sure everything goes smoothly.
 Add a prefix for all internal names.
 
 Use a namespace prefix followed by two dashes for internal names, e.g.
-  =__PROJECT-NAME__--internal-function=.
+  `__PROJECT-NAME__--internal-function`.
 
 ### Docstrings
 
 Write meaningful docstrings for all functions and vars.
-- Document all functions and variables as directed by =checkdoc=.
+
+- Document all functions and variables as directed by `checkdoc`.
 - Consider using [Flycheck](https://github.com/flycheck/flycheck) to automate
-  =checkdoc= while you're editing.
+  `checkdoc` while you're editing.
 
 ### Common Lisp functions
 
-Use =cl-lib= instead of =cl=. The =cl= library pollutes the global namespace and
+Use `cl-lib` instead of `cl`. The `cl` library pollutes the global namespace and
 its usage is therefore discouraged.
-- Use =cl-lib=, which adds prefixes to all cl function names
-- Use [noflet](https://github.com/nicferrier/emacs-noflet) instead of =flet=
+
+- Use `cl-lib`, which adds prefixes to all cl function names
+- Use [noflet](https://github.com/nicferrier/emacs-noflet) instead of `flet`
   when you need to dynamically rebind functions.

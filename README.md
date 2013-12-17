@@ -9,16 +9,16 @@ number of predefined templates and allows you to easily create your own.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. Installation</a></li>
-<li><a href="#sec-2">2. Creating Projects</a></li>
-<li><a href="#sec-3">3. Defining Project Templates</a>
+<li><a href="#installation">1. Installation</a></li>
+<li><a href="#creating-projects">2. Creating Projects</a></li>
+<li><a href="#defining-project-templates">3. Defining Project Templates</a>
 <ul>
-<li><a href="#sec-3-1">3.1. Structure</a></li>
-<li><a href="#sec-3-2">3.2. Token Expansion</a></li>
+<li><a href="#structure">3.1. Structure</a></li>
+<li><a href="#token-expansion">3.2. Token Expansion</a></li>
 </ul>
 </li>
-<li><a href="#sec-4">4. Contributing</a></li>
-<li><a href="#sec-5">5. License</a></li>
+<li><a href="#contributing">4. Contributing</a></li>
+<li><a href="#license">5. License</a></li>
 </ul>
 </li>
 </ul>
@@ -57,29 +57,35 @@ There are two simple parts to defining a new project:
 2. Use the `define-project-skeleton` macro to configure how the project template
     will be created.
 
-For example, here's the directory structure of the elisp-package skeleton:
+For example, here's the directory structure of the elisp-package template:
 
     elisp-package/
-    |-- CONTRIBUTING.org
+    |-- .gitignore
+    |-- CONTRIBUTING.md
     |-- Cask
     |-- Makefile
-    |-- README.org
+    |-- README.md
     |-- __PROJECT-NAME__.el
     `-- doc
         `-- __PROJECT-NAME__.org
 
-And here's the corresponding definition:
+And here's a corresponding configuration:
+
+```lisp
+(define-project-skeleton "elisp-package")
+```
+
+The above definition generates all the bindings you need to start using the
+skeleton. `define-project-skeleton` also allows you to perform more specialised
+configuration if necessary:
 
 ```lisp
 (define-project-skeleton "elisp-package"
   :default-license (rx bol "gpl")
-  :replacements '(("__DESCRIPTION__" . (lambda ()
-                                         (read-string "Description: "))))
+  :replacements '(("__DESCRIPTION__" . (lambda () (read-string "Description: "))))
   :after-creation
   (lambda (dir)
-    (async-shell-command
-     (format "cd %s && make env" (shell-quote-argument dir))
-     skel--shell-buffer-name)))
+    (skel-async-shell-command dir "make env")))
 ```
 
 ### Token Expansion

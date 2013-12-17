@@ -57,7 +57,9 @@ There are two simple parts to defining a new project:
 2. Use the `define-project-skeleton` macro to configure how the project template
     will be created.
 
-For example, here's the directory structure of the elisp-package template:
+For example, here's the directory structure of the
+[elisp-package](https://github.com/chrisbarrett/skeletor.el/tree/master/project-skeletons/elisp-package)
+template:
 
     elisp-package/
     |-- .gitignore
@@ -110,8 +112,10 @@ replacements.
 ## Contributing
 
 Yes, please do! More project types are especially welcome. Read over
-CONTRIBUTING.md for guidelines.
+[CONTRIBUTING](https://github.com/chrisbarrett/skeletor.el/blob/master/CONTRIBUTING.md)
+for guidelines.
 
 ## License
 
-See COPYING. Copyright (c) 2013 Chris Barrett.
+See [COPYING](https://github.com/chrisbarrett/skeletor.el/blob/master/COPYING).
+Copyright (c) 2013 Chris Barrett.

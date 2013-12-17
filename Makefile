@@ -26,10 +26,7 @@ all : env compile info dist
 
 # Configure tooling and environment.
 .PHONY: env
-env : packages features
-
-features : Cask
-	$(CASK) exec ecukes new
+env : packages
 
 # Byte-compile elisp files.
 .PHONY: compile

@@ -112,14 +112,16 @@ when initialising virtualenv."
 
 ;;;;;;;;;;;;;;;;;;;;;;;; Internal ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar skel-directory
-  (let ((pkg-root (f-dirname (or load-file-name (buffer-file-name)))))
-    (f-join pkg-root "project-skeletons"))
+(defvar skel--pkg-root (f-dirname (or load-file-name (buffer-file-name)))
+  "The base directory of the skeletor package.")
+
+(defvar skel--directory
+  (f-join skel--pkg-root "project-skeletons")
   "The directory containing built-in project skeletons.
 Each directory inside is available for instantiation as a project
 skeleton.")
 
-(defvar skel-license-directory (f-join skel-directory "licenses")
+(defvar skel--licenses-directory (f-join skel--pkg-root "licenses")
   "The directory containing license files for projects.")
 
 (defvar skel--shell-buffer-name "*Skeleton Shell Output*"
@@ -153,7 +155,7 @@ Performs the substitutions specified by REPLACEMENTS."
     (unwind-protect
 
         (progn
-          (--each (f-entries (or (f-expand template skel-directory)
+          (--each (f-entries (or (f-expand template skel--directory)
                                  (f-expand template skel-user-directory)))
             (f-copy it tmpd))
 
@@ -186,7 +188,7 @@ Performs the substitutions specified by REPLACEMENTS."
 
 * DEFAULT a regular expression used to find the default."
   (let* ((xs (--map (cons (s-upcase (f-filename it)) it)
-                    (f-files skel-license-directory)))
+                    (f-files skel--licenses-directory)))
          (d (car (--first (s-matches? default (car it)) xs)))
          (choice (ido-completing-read prompt (-map 'car xs) nil t d)))
     (cdr (assoc choice xs))))
@@ -226,7 +228,7 @@ Evaluates the cdr of each item in the alist according to the following rules:
   "Declare a new project type
 
 * NAME is a string naming the project type. A corresponding
-  skeleton should exist in `skel-directory' or
+  skeleton should exist in `skel--directory' or
   `skel-user-directory'.
 
 * REPLACEMENTS is an alist of (string . replacement) used specify

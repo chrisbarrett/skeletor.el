@@ -189,7 +189,8 @@ Performs the substitutions specified by REPLACEMENTS."
 * DEFAULT a regular expression used to find the default."
   (let* ((xs (--map (cons (s-upcase (f-filename it)) it)
                     (f-files skel--licenses-directory)))
-         (d (car (--first (s-matches? default (car it)) xs)))
+         (d (unless (s-blank? default)
+              (car (--first (s-matches? default (car it)) xs))))
          (choice (ido-completing-read prompt (-map 'car xs) nil t d)))
     (cdr (assoc choice xs))))
 
@@ -257,6 +258,8 @@ Performs the substitutions specified by REPLACEMENTS."
        (defvar ,default-license-var ,default-license
          ,(concat "Auto-generated variable.\n\n"
                   "The default license type for " name " skeletons.") )
+       ;; Update the variable if the definition is re-evaluated.
+       (setq ,default-license-var ,default-license)
 
        (defun ,constructor (project-name license-file)
 

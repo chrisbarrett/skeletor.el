@@ -124,9 +124,6 @@ skeleton.")
 (defvar skel--licenses-directory (f-join skel--pkg-root "licenses")
   "The directory containing license files for projects.")
 
-(defvar skel--shell-buffer-name "*Skeleton Shell Output*"
-  "The name of the buffer for displaying shell command output.")
-
 (defun skel--replace-all (replacements s)
   "Like s-replace-all, but perform fixcase replacements.
 REPLACEMENTS is an alist of (str . replacement), and S is the
@@ -211,14 +208,32 @@ Performs the substitutions specified by REPLACEMENTS."
                     (t
                      repl))))
 
+(defun skel--shell-command (dir command)
+  "Run a shell command.
+
+* DIR is an unquoted path at which to run the command.
+
+* COMMAND is the shell command to execute."
+  (shell-command
+   (format "cd %s && %s" (shell-quote-argument dir) command)
+   (format "*Skeleton Shell Output [%s]*" dir)))
+
+(defun skel--async-shell-command (dir command)
+  "Run an async shell command.
+
+* DIR is an unquoted path at which to run the command.
+
+* COMMAND is the shell command to execute."
+  (async-shell-command
+   (format "cd %s && %s" (shell-quote-argument dir) command)
+   (generate-new-buffer-name (format "*Skeleton Shell Output [%s]*" dir))))
+
 (defun skel--initialize-git-repo  (dir)
   "Initialise a new git repository at DIR."
   (when skel-init-with-git
     (message "Initialising git...")
-    (shell-command
-     (format "cd %s && git init && git add -A && git commit -m 'Initial commit'"
-             (shell-quote-argument dir))
-     (generate-new-buffer-name skel--shell-buffer-name))
+    (skel--shell-command
+     dir "git init && git add -A && git commit -m 'Initial commit'")
     (message "Initialising git...done")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;; User commands ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -317,9 +332,7 @@ Performs the substitutions specified by REPLACEMENTS."
          (read-string "Description: "))))
   :after-creation
   (lambda (dir)
-    (async-shell-command
-     (format "cd %s && make env" (shell-quote-argument dir))
-     skel--shell-buffer-name)))
+    (skel--async-shell-command dir "make env")))
 
 (defun skel-py--read-python-bin ()
   "Read a python binary from the user."
@@ -344,9 +357,8 @@ Performs the substitutions specified by REPLACEMENTS."
   (lambda (dir)
     (message "Finding python binaries...")
     (skel-py--create-virtualenv-dirlocals dir)
-    (async-shell-command
-     (format "cd %s && make tooling" (shell-quote-argument dir))
-     skel--shell-buffer-name)))
+    (skel--async-shell-command dir "make tooling")))
+
 
 (provide 'skeletor)
 

@@ -10,7 +10,7 @@ number of predefined templates and allows you to easily create your own.
 You will need Emacs 24+, =make= and [[https://github.com/cask/cask][Cask]] to build the project.
 #+begin_example
 cd
-git clone git@github.com:chrisbarrett/skeletor.git
+git clone git@github.com:chrisbarrett/skeletor.el.git
 cd skeletor
 make && make install
 #+end_example

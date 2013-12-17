@@ -1,0 +1,18 @@
+#+TITLE: __PROJECT-NAME__
+#+SUBTITLE: __TODO__
+#+AUTHOR: __USER-NAME__
+#+TEXINFO_FILENAME: __PROJECT-NAME__.info
+#+TEXINFO_HEADER: The __PROJECT-NAME__ manual
+#+TEXINFO_DIR_CATEGORY: Emacs
+#+TEXINFO_DIR_TITLE: __PROJECT-NAME__
+#+TEXINFO_DIR_DESC: __TODO__
+
+# This file is used to generate the info manual for __PROJECT-NAME__. It will be
+# automatically built by the `doc` task in the makefile. This requires org-mode
+# 8.0 or later for the texinfo exporter.
+
+* Overview
+* Usage
+* Extending
+* Contributing
+* License

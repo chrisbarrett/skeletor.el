@@ -1,0 +1,6 @@
+*.elc
+TAGS
+elpa
+doc/__PROJECT-NAME__.texi
+doc/__PROJECT-NAME__.info
+*-pkg.el

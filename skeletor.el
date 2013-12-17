@@ -273,6 +273,9 @@ Evaluates the cdr of each item in the alist according to the following rules:
                                       (list (cons "__PROJECT-NAME__" project-name))
                                       skel-global-replacements))))
 
+           (unless (f-exists? skel-project-directory)
+             (f-mkdir skel-project-directory))
+
            (skel--instantiate-template-directory ,name dest repls)
            (skel--instantiate-license-file license-file (f-join dest "COPYING") repls)
            (funcall ,after-creation dest)

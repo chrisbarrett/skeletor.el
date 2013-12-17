@@ -287,9 +287,10 @@ Performs the substitutions specified by REPLACEMENTS."
 ;;;###autoload
 (defun create-project (type)
   "Create a project of the given TYPE."
-  (interactive (list (completing-read "Skeleton: "
-                                      (-sort 'string< (-map 'car skel-project-skeletons))
-                                      nil t)))
+  (interactive
+   (list (completing-read "Skeleton: "
+                          (-sort 'string< (-map 'car skel-project-skeletons))
+                          nil t)))
   (let ((constructor (cdr (assoc type skel-project-skeletons))))
     (call-interactively constructor)))
 

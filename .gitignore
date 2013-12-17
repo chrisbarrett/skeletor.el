@@ -1,6 +1,8 @@
+# Generated files
 *.elc
+*-pkg.el
+*.tar
 TAGS
 elpa
 doc/skeletor.texi
 doc/skeletor.info
-*-pkg.el

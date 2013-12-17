@@ -1,0 +1,18 @@
+#+TITLE: skeletor
+#+SUBTITLE: __TODO__
+#+AUTHOR: Chris Barrett
+#+TEXINFO_FILENAME: skeletor.info
+#+TEXINFO_HEADER: The skeletor manual
+#+TEXINFO_DIR_CATEGORY: Emacs
+#+TEXINFO_DIR_TITLE: skeletor
+#+TEXINFO_DIR_DESC: __TODO__
+
+# This file is used to generate the info manual for skeletor. It will be
+# automatically built by the `doc` task in the makefile. This requires org-mode
+# 8.0 or later for the texinfo exporter.
+
+* Overview
+* Usage
+* Extending
+* Contributing
+* License

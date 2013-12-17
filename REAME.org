@@ -1,0 +1,11 @@
+#+TITLE: skeletor
+#+AUTHOR: Chris Barrett
+
+* Summary
+TODO
+
+* Contributing
+Yes, please do! See CONTRIBUTING for guidelines.
+
+* License
+See COPYING. Copyright (c) 2013 Chris Barrett.

@@ -269,9 +269,10 @@ Performs the substitutions specified by REPLACEMENTS."
          (let* ((dest (f-join skel-project-directory project-name))
                 (default-directory dest)
                 (repls (-map 'skel--eval-replacement
-                             (-concat (eval ',rs)
-                                      (list (cons "__PROJECT-NAME__" project-name))
-                                      skel-global-replacements))))
+                             (-concat
+                              skel-global-replacements
+                              (list (cons "__PROJECT-NAME__" project-name))
+                              ',rs))))
 
            (unless (f-exists? skel-project-directory)
              (f-mkdir skel-project-directory))

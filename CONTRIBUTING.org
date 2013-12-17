@@ -7,9 +7,8 @@ repository. Follow the guidelines below to make sure everything goes smoothly.
 ** Issue reporting
 - Check that the issue has not already been reported
 - Check that the issue has not already been fixed in the latest code
-- Be clear and precise (do not prose, but name functions and commands exactly)
-- Open an issue with a clear title and description in grammatically correct,
-  complete sentences.
+- Open an issue with a clear title
+- Write as grammatically correct as you can in the description.
 
 ** Pull requests
 - Perform all changes on a topic branch for easier merging
@@ -24,7 +23,7 @@ repository. Follow the guidelines below to make sure everything goes smoothly.
 Add a prefix for all internal names.
 
 Use a namespace prefix followed by two dashes for internal names, e.g.
-  =skeletor--internal-function=.
+  =skel--internal-function=.
 
 *** Docstrings
 Write meaningful docstrings for all functions and vars.

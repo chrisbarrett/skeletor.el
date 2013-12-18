@@ -20,7 +20,8 @@ predefined templates and allows you to easily create your own.
 </ul>
 </li>
 <li><a href="#contributing">4. Contributing</a></li>
-<li><a href="#license">5. License</a></li>
+<li><a href="#contributing">5. Acknowledgements</a></li>
+<li><a href="#license">6. License</a></li>
 </ul>
 </li>
 </ul>
@@ -116,6 +117,12 @@ replacements.
 Yes, please do! More project types are especially welcome. Read over
 [CONTRIBUTING](https://github.com/chrisbarrett/skeletor.el/blob/master/CONTRIBUTING.md)
 for guidelines.
+
+## Acknowledgements
+
+Muchas gracias to [@magnars](https://twitter.com/magnars) and
+[@rejeep](https://twitter.com/rejeep) for their excellent libraries and tooling.
+You guys are stars!
 
 ## License
 

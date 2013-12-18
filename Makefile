@@ -2,11 +2,12 @@ CWD          = $(shell pwd)
 DOC          = $(CWD)/doc
 SKELETONS    = $(CWD)/project-skeletons
 LICENSES     = $(CWD)/licenses
+SCRIPT       = $(CWD)/script
+GIT_DIR      = $(CWD)/.git
 EMACS       ?= emacs
 EMACSFLAGS   = --batch -Q
 PYTHON       = python
 CASK         = cask
-CASK_URL     = https://raw.github.com/cask/cask/master/go
 VERSION     := $(shell EMACS=$(EMACS) $(CASK) version)
 PKG_DIR     := $(shell EMACS=$(EMACS) $(CASK) package-directory)
 USER_EMACS_D = ~/.emacs.d
@@ -14,6 +15,7 @@ USER_INIT_EL = $(USER_EMACS_D)/init.el
 USER_ELPA_D  = $(USER_EMACS_D)/elpa
 
 SRCS         = $(filter-out %-pkg.el, $(wildcard *.el))
+TESTS        = $(filter-out %-pkg.el, $(wildcard test/*.el))
 OBJECTS      = $(SRCS:.el=.elc)
 DOC_ORG      = $(DOC)/skeletor.org
 DOC_TEXI     = $(DOC)/skeletor.texi
@@ -21,21 +23,32 @@ INFO_MANUAL  = $(DOC)/skeletor.info
 PACKAGE_SRCS = $(SRCS) skeletor-pkg.el $(INFO_MANUAL)
 PACKAGE_TAR  = skeletor-$(VERSION).tar
 
+PRECOMMIT_SRC  = $(SCRIPT)/pre-commit.sh
+PRECOMMIT_HOOK = $(GIT_DIR)/hooks/pre-commit
+
 .PHONY: all
 all : env compile info dist
 
 # Configure tooling and environment.
 .PHONY: env
-env : packages
+env : packages $(PRECOMMIT_HOOK)
+
+# Run tests before committing.
+$(PRECOMMIT_HOOK) :
+	ln -s $(PRECOMMIT_SRC) $(PRECOMMIT_HOOK)
+	chmod +x $(PRECOMMIT_HOOK)
 
 # Byte-compile elisp files.
 .PHONY: compile
 compile : $(OBJECTS)
 
-# Run ecukes tests.
+# Run ert tests.
 .PHONY: check
 check : compile
-	$(CASK) exec ecukes
+	$(CASK) exec $(EMACS) $(EMACSFLAGS)  \
+	$(patsubst %,-l % , $(SRCS))\
+	$(patsubst %,-l % , $(TESTS))\
+	-f ert-run-tests-batch-and-exit
 
 # Export the org documentation to an info manual.
 .PHONY: info

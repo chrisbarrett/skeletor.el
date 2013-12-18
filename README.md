@@ -2,8 +2,11 @@
 
 [![Build Status](https://travis-ci.org/chrisbarrett/skeletor.el.png?branch=master)](https://travis-ci.org/chrisbarrett/skeletor.el)
 
-Skeletor adds support for project templates in Emacs. It comes with a number of
-predefined templates and allows you to easily create your own.
+Skeletor provides project templates for Emacs. It also automates the mundane
+parts of setting up a new project like version control, licenses and tooling.
+
+Skeletor comes with a number of predefined predefined templates and allows you
+to easily create your own.
 
 ![Skeletor Laughing](assets/skeletor.jpg)
 

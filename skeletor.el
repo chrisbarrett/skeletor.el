@@ -102,7 +102,7 @@ project."
   :type 'hook)
 
 (defgroup skeletor-python nil
-  "Configuration for python projects in skeletor."
+  "Configuration for python projects in Skeletor."
   :group 'tools
   :prefix "skel-python-")
 
@@ -149,7 +149,7 @@ when initialising virtualenv."
 ;;; ----------------------------- Internal -------------------------------------
 
 (defvar skel--pkg-root (f-dirname (or load-file-name (buffer-file-name)))
-  "The base directory of the skeletor package.")
+  "The base directory of the Skeletor package.")
 
 (defvar skel--directory
   (f-join skel--pkg-root "project-skeletons")
@@ -420,7 +420,8 @@ replacement."
 
 ;;;###autoload
 (defun create-project (type)
-  "Create a project of the given TYPE."
+  "Interactively create a new project with Skeletor.
+TYPE is the name of an existing project skeleton."
   (interactive
    (list (completing-read "Skeleton: "
                           (-sort 'string< (-map 'car skel--project-skeletons))

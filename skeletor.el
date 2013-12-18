@@ -326,11 +326,11 @@ replacement."
 
 ;;;###autoload
 (cl-defmacro define-project-skeleton (name
-                                       &key
-                                       replacements
-                                       (after-creation 'ignore)
-                                       default-license
-                                       (license-file-name "COPYING"))
+                                      &key
+                                      replacements
+                                      (after-creation 'ignore)
+                                      default-license
+                                      (license-file-name "COPYING"))
   "Declare a new project type.
 
 * NAME is a string naming the project type. A corresponding

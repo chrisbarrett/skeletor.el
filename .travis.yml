@@ -17,4 +17,4 @@ env:
   - EMACS=emacs24
   - EMACS=emacs-snapshot
 script:
-  make check
+  - make -k info check

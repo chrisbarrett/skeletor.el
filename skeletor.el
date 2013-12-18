@@ -258,6 +258,7 @@ replacement."
   (cl-assert (stringp src))
   (cl-assert (f-exists? src))
   (cl-assert (stringp dest))
+  (make-directory dest t)
   (->> (skel--dir->SkeletorTemplate src)
     (skel--expand-template-paths replacements dest)
     (skel--instantiate-spec replacements)))

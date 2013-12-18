@@ -26,7 +26,123 @@
 
 ;;; Code:
 
+(eval-and-compile
+  ;; Add project root to flycheck checker load path to prevent spurious warnings.
+  (when (boundp' flycheck-emacs-lisp-load-path)
+    (dolist (it (file-expand-wildcards "../.cask/*/elpa/*"))
+      (add-to-list 'flycheck-emacs-lisp-load-path it))
+    (add-to-list 'flycheck-emacs-lisp-load-path (expand-file-name "../"))))
+
 (require 'ert)
+(require 'skeletor)
+
+(defvar this-dir        (f-dirname (or load-file-name (buffer-file-name))))
+
+(defvar template-name   "example-project")
+
+(defvar template-path   (f-join this-dir template-name))
+
+;; Predeclare variables to prevent warnings.
+
+(defvar destination-path)
+(defvar template-instance)
+(defvar spec-instance)
+(defvar test-replacements)
+(defvar test-token)
+
+;; Regenerate random vars each test run.
+
+(setq destination-path  (make-temp-file "skeletor-test_" t)
+
+      template-instance (skel--dir->SkeletorTemplate template-path)
+
+      test-token (concat "MiXcAsE" (md5 (number-to-string (random))))
+
+      test-replacements `(("__PROJECT-NAME__" . ,template-name)
+                          ("__TOKEN__"        . ,test-token))
+
+      spec-instance     (skel--expand-template-paths test-replacements
+                                                     destination-path
+                                                     template-instance))
+
+;;; Utility functions
+
+(defun -sets-equal? (xs ys)
+  "Return non-nil if XS and YS are identical sets.
+Elements are compared using `equal'."
+  (not (or (-difference xs ys) (-difference ys xs))))
+
+;;; Template parsing and transformations
+
+(ert-deftest skeletor-template-root-has-correct-dir ()
+  (should (equal template-path (SkeletorTemplate-path template-instance))))
+
+(ert-deftest skeletor-template-has-all-directories ()
+  (should (-sets-equal? (f-directories template-path nil t)
+                        (SkeletorTemplate-dirs template-instance))))
+
+(ert-deftest skeletor-template-has-all-files ()
+  (should (-sets-equal? (f-files template-path nil t)
+                        (SkeletorTemplate-files template-instance))))
+
+(ert-deftest original-dirnames-in-expanded-template ()
+  (should (-sets-equal? (SkeletorTemplate-dirs template-instance)
+                        (-map 'car (SkeletorExpansionSpec-dirs spec-instance)))))
+
+(ert-deftest original-filenames-in-expanded-template ()
+  (should (-sets-equal? (SkeletorTemplate-files template-instance)
+                        (-map 'car (SkeletorExpansionSpec-files spec-instance)))))
+
+(ert-deftest expands-tokens-in-dirnames-when-expanding-template ()
+  (should (--only-some? (s-matches? template-name (f-filename (cdr it)))
+                        (SkeletorExpansionSpec-dirs spec-instance))))
+
+(ert-deftest expands-tokens-in-filenames-when-expanding-template ()
+  (should (--only-some? (s-matches? template-name (f-filename (cdr it)))
+                        (SkeletorExpansionSpec-files spec-instance))))
+
+(ert-deftest instance-starts-with-project-name--not-template-name ()
+  (should (--none? (s-ends-with? (f-slash template-name) (f-dirname (cdr it)))
+                   (-concat (SkeletorExpansionSpec-files spec-instance)
+                            (SkeletorExpansionSpec-dirs spec-instance)))))
+
+(ert-deftest spec-output-files-are-relative-to-dest ()
+  (should (--all? (s-starts-with? destination-path (cdr it))
+                  (SkeletorExpansionSpec-files spec-instance))))
+
+(ert-deftest spec-output-directories-are-relative-to-dest ()
+  (should (--all? (s-starts-with? destination-path (cdr it))
+                  (SkeletorExpansionSpec-dirs spec-instance))))
+
+(ert-deftest expands-tokens-in-files-with-fixed-case ()
+  (let* ((token "__REPL__")
+         (expected "test TEST tEsT")
+         (replacements (list (cons token expected))))
+    (should (equal expected (skel--replace-all replacements token)))))
+
+;;; Integration tests
+
+(skel--instantiate-skeleton-dir test-replacements template-path destination-path)
+
+(ert-deftest instantiates-all-files-in-template ()
+  (should (equal (length (f-files template-path nil t))
+                 (length (f-files destination-path nil t)))))
+
+(ert-deftest instantiates-all-dirs-in-template ()
+  (should (equal (length (f-directories template-path nil t))
+                 (length (f-directories destination-path nil t)))))
+
+(ert-deftest expands-tokens-in-instantiated-files ()
+  (should (--only-some? (s-contains? test-token (f-read it))
+                        (f-files destination-path nil t))))
+
+(ert-deftest expands-file-name-tokens-in-instantiated-project ()
+  (should (--only-some? (s-starts-with? template-name (f-filename it))
+                        (f-files destination-path nil t))))
+
+(ert-deftest expands-directory-name-tokens-in-instantiated-project ()
+  (should (--only-some? (s-starts-with? template-name (f-filename it))
+                        (f-directories destination-path nil t))))
 
 (provide 'skeletor-tests)
 

@@ -4,7 +4,7 @@
 
 ;; Author: Chris Barrett <chris.d.barrett@me.com>
 ;; Package-Requires: ((s "1.7.0") (f "0.14.0") (dash "2.2.0") (cl-lib "0.3") (emacs "24.1"))
-;; Version: 0.1
+;; Version: 0.2
 
 ;; This file is not part of GNU Emacs.
 
@@ -35,7 +35,7 @@
 
 ;;; Code:
 
-(eval-when-compile
+(eval-and-compile
   ;; Add cask packages to load path so flycheck checkers work.
   (when (boundp' flycheck-emacs-lisp-load-path)
     (dolist (it (file-expand-wildcards "./.cask/*/elpa/*"))
@@ -45,9 +45,6 @@
 (require 's)
 (require 'f)
 (require 'cl-lib)
-
-(defvar skel-project-skeletons nil
-  "The list of available project skeletons.")
 
 (defgroup skeletor nil
   "Provides customisable project skeletons for Emacs."
@@ -110,7 +107,39 @@ when initialising virtualenv."
   :group 'skeletor-python
   :type '(repeat directory))
 
-;;;;;;;;;;;;;;;;;;;;;;;; Internal ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; -------------------------- Public Utilities --------------------------------
+
+(defun skel-shell-command (dir command)
+  "Run a shell command.
+
+* DIR is an unquoted path at which to run the command.
+
+* COMMAND is the shell command to execute."
+  (let ((buf (get-buffer-create
+              (format "*Skeletor [%s]*" dir))))
+    (with-current-buffer buf
+      (erase-buffer))
+    (shell-command
+     (format "cd %s && %s" (shell-quote-argument dir) command)
+     buf)))
+
+(defun skel-async-shell-command (dir command)
+  "Run an async shell command.
+
+* DIR is an unquoted path at which to run the command.
+
+* COMMAND is the shell command to execute."
+  (let ((buf (get-buffer-create
+              (generate-new-buffer-name
+               (format "*Skeletor [%s]*" dir)))))
+    (with-current-buffer buf
+      (erase-buffer))
+    (async-shell-command
+     (format "cd %s && %s" (shell-quote-argument dir) command)
+     buf
+     (format "*Skeleton Errors [%s]*" dir))))
+
+;;; ----------------------------- Internal -------------------------------------
 
 (defvar skel--pkg-root (f-dirname (or load-file-name (buffer-file-name)))
   "The base directory of the skeletor package.")
@@ -121,54 +150,121 @@ when initialising virtualenv."
 Each directory inside is available for instantiation as a project
 skeleton.")
 
+(defvar skel--project-skeletons nil "The list of available project skeletons.")
+
 (defvar skel--licenses-directory (f-join skel--pkg-root "licenses")
   "The directory containing license files for projects.")
 
-(defun skel--replace-all (replacements s)
-  "Like s-replace-all, but perform fixcase replacements.
-REPLACEMENTS is an alist of (str . replacement), and S is the
-string to process."
-  (replace-regexp-in-string (regexp-opt (mapcar 'car replacements))
-                            (lambda (it) (s--aget replacements it))
-                            s 'fixcase))
+(cl-defstruct (SkeletorTemplate
+               (:constructor SkeletorTemplate (path files dirs)))
+  "Represents a project template.
 
-(defun skel--instantiate-template-file (file replacements)
-  "Initialise an individual file.
+* PATH is the path to this project template.
 
-* FILE is the path to the file.
+* DIRS is a list of all directories in the filesystem tree beneath PATH.
 
-* REPLACEMENTS is an alist of substitutions to perform in the file."
-  (with-temp-file file
-    (insert-file-contents-literally file)
-    (--each replacements
-      (goto-char 0)
-      (while (search-forward (car it) nil t)
-        (replace-match (cdr it) 'fixcase 'literal)))))
+* FILES is a list of all files in the filesystem tree beneath PATH."
+  path files dirs)
 
-(defun skel--instantiate-template-directory (template dest replacements)
-  "Create the directory for TEMPLATE at destination DEST.
-Performs the substitutions specified by REPLACEMENTS."
-  (let ((tmpd (make-temp-file "project-skeleton__" t)))
-    (unwind-protect
+(cl-defstruct (SkeletorExpansionSpec
+               (:constructor SkeletorExpansionSpec (files dirs)))
+  "Represents a project template with expanded filenames.
 
-        (progn
-          (--each (f-entries (or (f-expand template skel--directory)
-                                 (f-expand template skel-user-directory)))
-            (f-copy it tmpd))
+* DIRS is a list of conses, where the car is a path to a dir in
+  the template and the cdr is that dirname with all replacements performed.
 
-          ;; Process file name and contents according to replacement rules.
-          (--each (f-entries tmpd nil t)
-            (let ((updated (skel--replace-all replacements it)))
-              (unless (equal updated it)
-                (rename-file it updated))))
+* FILES is a list of conses, where the car is a path to a file in
+  the template and the cdr is that filename with all replacements
+  performed."
+  files dirs)
 
-          (--each (f-files tmpd nil t)
-            (skel--instantiate-template-file it replacements))
+;; FilePath -> SkeletorTemplate
+(defun skel--dir->SkeletorTemplate (path)
+  "Construct a SkeletorTemplate from the filesystem entries at PATH."
+  (SkeletorTemplate path (f-files path nil t) (f-directories path nil t)))
 
-          (copy-directory tmpd dest)))
+;; [(String,String)], FilePath -> SkeletorExpansionSpec
+(defun skel--expand-template-paths (replacements dest template)
+  "Expand all file and directory names in a template.
+Return a SkeletorExpansionSpec.
 
-    (delete-directory tmpd t)))
+* REPLACEMENTS is an alist as accepted by `s-replace-all'.
 
+* DEST is the destination path for the template.
+
+* TEMPLATE is a SkeletorTemplate."
+  (cl-assert (stringp dest))
+  (cl-assert (listp replacements))
+  (cl-assert (SkeletorTemplate-p template))
+  (cl-flet ((expand (it)
+                    (->> (skel--replace-all replacements it)
+                      (s-chop-prefix (SkeletorTemplate-path template))
+                      (s-prepend (s-chop-suffix (f-path-separator) dest)))))
+    (SkeletorExpansionSpec
+     (--map (cons it (expand it)) (SkeletorTemplate-files template))
+     (--map (cons it (expand it)) (SkeletorTemplate-dirs template)))))
+
+;; [(String,String)], String -> String
+(defun skel--replace-all (replacements str)
+  "Expand REPLACEMENTS in STR with fixed case.
+Like `s-replace-all' but preserves case of the case of the
+replacement."
+  (replace-regexp-in-string (regexp-opt (-map 'car replacements))
+                            (lambda (it)
+                              (cdr (assoc it replacements)))
+                            str 'fixcase))
+
+(defun skel--validate-replacements (alist)
+  "Assert that ALIST will be accepted by `s-replace-all'."
+  (cl-assert (listp alist))
+  (cl-assert (--all? (stringp (car it)) alist))
+  (cl-assert (--all? (stringp (cdr it)) alist)))
+
+;; [(String,String)], SkeletorExpansionSpec -> IO ()
+(defun skel--instantiate-spec (replacements spec)
+  "Create an instance of the given template specification.
+
+* REPLACEMENTS is an alist as accepted by `s-replace-all'.
+
+* SPEC is a SkeletorExpansionSpec."
+  (skel--validate-replacements replacements)
+  (cl-assert (SkeletorExpansionSpec-p spec))
+  (--each (-map 'cdr (SkeletorExpansionSpec-dirs spec))
+    (make-directory it t))
+  (--each (SkeletorExpansionSpec-files spec)
+    (message "%s" it)
+    (cl-destructuring-bind (src . dest) it
+      (f-touch dest)
+      (f-write (skel--replace-all replacements (f-read src))
+               'utf-8 dest))))
+
+;; [(String,String)], FilePath, FilePath -> IO ()
+(defun skel--instantiate-skeleton-dir (replacements src dest)
+  "Create an instance of a project skeleton.
+
+* REPLACEMENTS is an alist as accepted by `s-replace-all'.
+
+* SRC is the path to the template directory.
+
+* DEST is the destination path for the template."
+  (skel--validate-replacements replacements)
+  (cl-assert (stringp src))
+  (cl-assert (f-exists? src))
+  (cl-assert (stringp dest))
+  (->> (skel--dir->SkeletorTemplate src)
+    (skel--expand-template-paths replacements dest)
+    (skel--instantiate-spec replacements)))
+
+;; FilePath -> IO ()
+(defun skel--initialize-git-repo  (dir)
+  "Initialise a new git repository at DIR."
+  (when skel-init-with-git
+    (message "Initialising git...")
+    (skel-shell-command
+     dir "git init && git add -A && git commit -m 'Initial commit'")
+    (message "Initialising git...done")))
+
+;; FilePath, FilePath, [(String,String)] -> IO ()
 (defun skel--instantiate-license-file (license-file dest replacements)
   "Populate the given license file template.
 * LICENSE-FILE is the path to the template license file.
@@ -178,19 +274,9 @@ Performs the substitutions specified by REPLACEMENTS."
 * REPLACEMENTS is an alist passed to `skel--replace-all'."
   (f-write (skel--replace-all replacements (f-read license-file)) 'utf-8 dest))
 
-(defun skel-read-license (prompt default)
-  "Prompt the user to select a license.
+;;; ---------------------- User Interface Commands -----------------------------
 
-* PROMPT is the prompt shown to the user.
-
-* DEFAULT a regular expression used to find the default."
-  (let* ((xs (--map (cons (s-upcase (f-filename it)) it)
-                    (f-files skel--licenses-directory)))
-         (d (unless (s-blank? default)
-              (car (--first (s-matches? default (car it)) xs))))
-         (choice (ido-completing-read prompt (-map 'car xs) nil t d)))
-    (cdr (assoc choice xs))))
-
+;; [(String,String)] -> IO [(String,String)]
 (cl-defun skel--eval-replacement ((token . repl))
   "Convert a replacement item according to the following rules:
 
@@ -208,44 +294,21 @@ Performs the substitutions specified by REPLACEMENTS."
                     (t
                      repl))))
 
-(defun skel-shell-command (dir command)
-  "Run a shell command.
+;; String, Regex -> IO FilePath
+(defun skel--read-license (prompt default)
+  "Prompt the user to select a license.
 
-* DIR is an unquoted path at which to run the command.
+* PROMPT is the prompt shown to the user.
 
-* COMMAND is the shell command to execute."
-  (let ((buf (get-buffer-create
-              (format "*Skeleton Shell Output [%s]*" dir))))
-    (with-current-buffer buf
-      (erase-buffer))
-    (shell-command
-     (format "cd %s && %s" (shell-quote-argument dir) command)
-     buf)))
+* DEFAULT a regular expression used to find the default."
+  (let* ((xs (--map (cons (s-upcase (f-filename it)) it)
+                    (f-files skel--licenses-directory)))
+         (d (unless (s-blank? default)
+              (car (--first (s-matches? default (car it)) xs))))
+         (choice (ido-completing-read prompt (-map 'car xs) nil t d)))
+    (cdr (assoc choice xs))))
 
-(defun skel-async-shell-command (dir command)
-  "Run an async shell command.
-
-* DIR is an unquoted path at which to run the command.
-
-* COMMAND is the shell command to execute."
-  (let ((buf (get-buffer-create
-              (generate-new-buffer-name
-               (format "*Skeleton Shell Output [%s]*" dir)))))
-    (with-current-buffer buf
-      (erase-buffer))
-    (async-shell-command
-     (format "cd %s && %s" (shell-quote-argument dir) command)
-     buf
-     (format "*Skeleton Errors [%s]*" dir))))
-
-(defun skel--initialize-git-repo  (dir)
-  "Initialise a new git repository at DIR."
-  (when skel-init-with-git
-    (message "Initialising git...")
-    (skel-shell-command
-     dir "git init && git add -A && git commit -m 'Initial commit'")
-    (message "Initialising git...done")))
-
+;; {String} -> IO String
 (cl-defun skel--read-project-name (&optional (prompt "Project Name: "))
   "Read a project name from the user."
   (let* ((name (read-string prompt))
@@ -259,15 +322,15 @@ Performs the substitutions specified by REPLACEMENTS."
      (t
       name))))
 
-;;;;;;;;;;;;;;;;;;;;;;;; User commands ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Public user commands
 
 ;;;###autoload
 (cl-defmacro define-project-skeleton (name
-                                      &key
-                                      replacements
-                                      (after-creation 'ignore)
-                                      default-license
-                                      (license-file-name "COPYING"))
+                                       &key
+                                       replacements
+                                       (after-creation 'ignore)
+                                       default-license
+                                       (license-file-name "COPYING"))
   "Declare a new project type.
 
 * NAME is a string naming the project type. A corresponding
@@ -311,8 +374,7 @@ Performs the substitutions specified by REPLACEMENTS."
 
          (interactive
           (list (skel--read-project-name)
-                (skel-read-license "License: "
-                                   (eval ,default-license-var))))
+                (skel--read-license "License: " (eval ,default-license-var))))
 
          (let* ((dest (f-join skel-project-directory project-name))
                 (default-directory dest)
@@ -323,12 +385,22 @@ Performs the substitutions specified by REPLACEMENTS."
                                     (cons "__LICENSE-FILE-NAME__" ,license-file-name))
                               ',rs))))
 
-           (unless (f-exists? skel-project-directory)
-             (f-mkdir skel-project-directory))
+           ;; Instantiate the project.
 
-           (skel--instantiate-template-directory ,name dest repls)
-           (skel--instantiate-license-file license-file
-                                           (f-join dest ,license-file-name) repls)
+           (-if-let (skeleton (-first 'f-exists?
+                                      (list (f-expand ,name skel-user-directory)
+                                            (f-expand ,name skel--directory))))
+               (progn
+
+                 (unless (f-exists? skel-project-directory)
+                   (make-directory skel-project-directory t))
+
+
+                 (skel--instantiate-skeleton-dir repls skeleton dest))
+             (error "Skeleton %s not found" ,name))
+
+           (skel--instantiate-license-file
+            license-file (f-join dest ,license-file-name) repls)
 
            (save-window-excursion
              (funcall #',after-creation dest)
@@ -336,19 +408,19 @@ Performs the substitutions specified by REPLACEMENTS."
              (run-hook-with-args 'skel-after-project-instantiated-hook default-directory))
            (message "Project created at %s" dest)))
 
-       (add-to-list 'skel-project-skeletons (cons ,name ',constructor)))))
+       (add-to-list 'skel--project-skeletons (cons ,name ',constructor)))))
 
 ;;;###autoload
 (defun create-project (type)
   "Create a project of the given TYPE."
   (interactive
    (list (completing-read "Skeleton: "
-                          (-sort 'string< (-map 'car skel-project-skeletons))
+                          (-sort 'string< (-map 'car skel--project-skeletons))
                           nil t)))
-  (let ((constructor (cdr (assoc type skel-project-skeletons))))
+  (let ((constructor (cdr (assoc type skel--project-skeletons))))
     (call-interactively constructor)))
 
-;;;;;;;;;;;;;;;;;;;;;;;; Define skeletons ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; ------------------------ Built-in skeletons --------------------------------
 
 (define-project-skeleton "elisp-package"
   :default-license (rx bol "gpl")
@@ -427,3 +499,6 @@ Sandboxes were introduced in cabal 1.18 ."
 (provide 'skeletor)
 
 ;;; skeletor.el ends here
+
+;;  LocalWords:  SkeletorTemplate SkeletorDirectory SkeletorExpansionSpec STR
+;;  LocalWords:  DEST skeletor

@@ -276,7 +276,7 @@ replacement."
 
 ;;; ---------------------- User Interface Commands -----------------------------
 
-;; [(String,String)] -> IO [(String,String)]
+;; (String,String) -> IO (String,String)
 (cl-defun skel--eval-replacement ((token . repl))
   "Convert a replacement item according to the following rules:
 

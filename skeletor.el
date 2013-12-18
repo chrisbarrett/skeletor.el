@@ -87,6 +87,13 @@ evaluated or a function that will be called."
   :group 'skeletor
   :type 'boolean)
 
+(defcustom skel-show-project-command 'dired
+  "The command to use to show newly-created projects.
+Should be a function that accepts the path to the project as an
+argument."
+  :group 'skeletor
+  :type 'function)
+
 (defcustom skel-after-project-instantiated-hook nil
   "Hook run after a project is successfully instantiated.
 Each function will be passed the path of the newly instantiated
@@ -406,6 +413,10 @@ replacement."
              (funcall #',after-creation dest)
              (skel--initialize-git-repo dest)
              (run-hook-with-args 'skel-after-project-instantiated-hook default-directory))
+
+           (when skel-show-project-command
+             (funcall skel-show-project-command dest))
+
            (message "Project created at %s" dest)))
 
        (add-to-list 'skel--project-skeletons (cons ,name ',constructor)))))

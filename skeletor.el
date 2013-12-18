@@ -398,16 +398,13 @@ replacement."
                                       (list (f-expand ,name skel-user-directory)
                                             (f-expand ,name skel--directory))))
                (progn
-
                  (unless (f-exists? skel-project-directory)
                    (make-directory skel-project-directory t))
+                 (skel--instantiate-skeleton-dir repls skeleton dest)
+                 (skel--instantiate-license-file
+                  license-file (f-join dest ,license-file-name) repls))
 
-
-                 (skel--instantiate-skeleton-dir repls skeleton dest))
              (error "Skeleton %s not found" ,name))
-
-           (skel--instantiate-license-file
-            license-file (f-join dest ,license-file-name) repls)
 
            (save-window-excursion
              (funcall #',after-creation dest)

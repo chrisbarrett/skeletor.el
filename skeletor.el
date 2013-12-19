@@ -187,7 +187,8 @@ download instructions."
 Each directory inside is available for instantiation as a project
 skeleton.")
 
-(defvar skel--project-skeletons nil "The list of available project skeletons.")
+(defvar skel--project-types nil
+  "A list of SkeletorProjectType that represents the available templates.")
 
 (defvar skel--licenses-directory (f-join skel--pkg-root "licenses")
   "The directory containing license files for projects.")
@@ -214,6 +215,16 @@ skeleton.")
   the template and the cdr is that filename with all replacements
   performed."
   files dirs)
+
+(cl-defstruct (SkeletorProjectType
+               (:constructor SkeletorProjectType (title constructor)))
+  "Represents a project type that can be created by the user.
+
+* TITLE is the string representation of the template to be shown
+  in the UI.
+
+* CONSTRUCTOR is a command to call to construct an instance of the skeleton."
+  title constructor)
 
 ;; FilePath -> SkeletorTemplate
 (defun skel--dir->SkeletorTemplate (path)
@@ -382,6 +393,7 @@ replacement."
 ;;;###autoload
 (cl-defmacro define-project-skeleton (name
                                       &key
+                                      title
                                       replacements
                                       (after-creation 'ignore)
                                       default-license
@@ -392,6 +404,9 @@ replacement."
 * NAME is a string naming the project type. A corresponding
   skeleton should exist in `skel--directory' or
   `skel-user-directory'.
+
+* TITLE is the name to use when referring this project type in
+  the UI.
 
 * REPLACEMENTS is an alist of (string . replacement) used specify
   substitutions when initialising the project from its skeleton.
@@ -407,7 +422,8 @@ replacement."
   expressing programs needed to expand this skeleton. See
   `skel-require-executables'."
   (declare (indent 1))
-  (cl-assert (or (symbolp name) (stringp name)) t)
+  (cl-assert (stringp name) t)
+  (cl-assert (or (null title) (stringp title)) t)
   (cl-assert (stringp license-file-name) t)
   (let ((constructor (intern (format "skel--create-%s" name)))
         (default-license-var (intern (format "%s-default-license" name)))
@@ -477,10 +493,11 @@ replacement."
 
            (message "Project created at %s" dest)))
 
-       (add-to-list 'skel--project-skeletons (cons ,name ',constructor)))))
+       (add-to-list 'skel--project-types
+                    (SkeletorProjectType ,(or title name) ',constructor)))))
 
 ;;;###autoload
-(cl-defmacro define-skeleton-constructor (name
+(cl-defmacro define-skeleton-constructor (title
                                           &key
                                           initialise
                                           no-git?
@@ -488,7 +505,7 @@ replacement."
   "Define a new project type with a custom way of constructing a skeleton.
 This can be used to add bindings for command-line tools.
 
-* NAME is a string naming the project type in the UI.
+* TITLE is a string naming the project type in the UI.
 
 * INITIALISE is a binary function that creates the project
   structure. It will be passed a name for the project, read from
@@ -508,9 +525,9 @@ This can be used to add bindings for command-line tools.
   expressing programs needed to expand this skeleton. See
   `skel-require-executables'."
   (declare (indent 1))
-  (cl-assert (or (symbolp name) (stringp name)) t)
-  (cl-assert (functionp initialise))
-  (let ((constructor (intern (format "skel--create-%s" name)))
+  (cl-assert (stringp title) t)
+  (cl-assert (functionp initialise) t)
+  (let ((constructor (intern (format "skel--create-%s" title)))
         (exec-alist (eval requires-executables)))
     (cl-assert (listp requires-executables) t)
     (cl-assert (-all? 'stringp (-map 'car exec-alist)) t)
@@ -521,7 +538,7 @@ This can be used to add bindings for command-line tools.
 
          ,(concat
            "Auto-generated function.\n\n"
-           "Interactively creates a new " name " skeleton.\n"
+           "Interactively creates a new " title " skeleton.\n"
            "
 * PROJECT-NAME is the name of this project instance.")
          (interactive
@@ -543,22 +560,27 @@ This can be used to add bindings for command-line tools.
 
            (message "Project created at %s" dest)))
 
-       (add-to-list 'skel--project-skeletons (cons ,name ',constructor)))))
+       (add-to-list 'skel--project-types (SkeletorProjectType ,title ',constructor)))))
 
 ;;;###autoload
-(defun create-project (type)
+(defun create-project (title)
   "Interactively create a new project with Skeletor.
-TYPE is the name of an existing project skeleton."
+TITLE is the name of an existing project skeleton."
   (interactive
    (list (completing-read "Skeleton: "
-                          (-sort 'string< (-map 'car skel--project-skeletons))
+                          (->> skel--project-types
+                            (-map 'SkeletorProjectType-title)
+                            (-sort 'string<))
                           nil t)))
-  (let ((constructor (cdr (assoc type skel--project-skeletons))))
-    (call-interactively constructor)))
+  (->> skel--project-types
+    (--first (equal title (SkeletorProjectType-title it)))
+    SkeletorProjectType-constructor
+    (call-interactively)))
 
 ;;; ------------------------ Built-in skeletons --------------------------------
 
 (define-project-skeleton "elisp-package"
+  :title "Elisp Package"
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")
                           ("cask" . "https://github.com/cask/cask"))
   :default-license (rx bol "gpl")
@@ -588,6 +610,7 @@ TYPE is the name of an existing project skeleton."
     (kill-buffer)))
 
 (define-project-skeleton "python-library"
+  :title "Python Library"
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")
                           ("virtualenv" . "http://www.virtualenv.org"))
   :replacements '(("__PYTHON-BIN__" . skel-py--read-python-bin))
@@ -619,6 +642,7 @@ Sandboxes were introduced in cabal 1.18 ."
       (or (< 1 maj) (<= 18 min)))))
 
 (define-project-skeleton "haskell-executable"
+  :title "Haskell Executable"
   :requires-executables '(("cabal" . "http://www.haskell.org/cabal/"))
   :license-file-name "LICENSE"
   :replacements

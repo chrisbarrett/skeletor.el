@@ -311,8 +311,12 @@ replacement."
   "Initialise a new git repository at DIR."
   (when skel-init-with-git
     (message "Initialising git...")
+    ;; Some tools (e.g. bundler) initialise git but do not make an initial
+    ;; commit.
+    (unless (f-exists? (f-join dir ".git"))
+      (skel-shell-command dir "git init"))
     (skel-shell-command
-     dir "git init && git add -A && git commit -m 'Initial commit'")
+     dir "git add -A && git commit -m 'Initial commit'")
     (message "Initialising git...done")))
 
 ;; FilePath, FilePath, [(String,String)] -> IO ()
@@ -632,6 +636,16 @@ Sandboxes were introduced in cabal 1.18 ."
     (when (skel-hs--cabal-sandboxes-supported?)
       (message "Initialising sandbox...")
       (skel-async-shell-command dir "cabal sandbox init"))))
+
+(define-skeleton-constructor "Ruby Gem"
+  :requires-executables '(("bundle" . "http://bundler.io"))
+  :initialise
+  (lambda (name project-dir)
+    (skel-shell-command
+     project-dir (format "bundle gem %s" (shell-quote-argument name)))
+    (when (and (executable-find "rspec")
+               (y-or-n-p "Create RSpec test suite? "))
+      (skel-shell-command (f-join project-dir name) "rspec --init"))))
 
 (provide 'skeletor)
 

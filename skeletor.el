@@ -45,6 +45,7 @@
 (require 's)
 (require 'f)
 (require 'cl-lib)
+(autoload 'insert-button "button")
 
 (defgroup skeletor nil
   "Provides customisable project skeletons for Emacs."
@@ -151,6 +152,29 @@ when initialising virtualenv."
      (format "cd %s && %s" (shell-quote-argument dir) command)
      buf
      (format "*Skeleton Errors [%s]*" dir))))
+
+(defun skel-require-executables (alist)
+  "Check that executables can be located in the `exec-path'.
+Show a report with installation instructions if any cannot be
+found.
+
+ALIST is a list of `(PROGRAM-NAME . URL)', where URL points to
+download instructions."
+  (-when-let (not-found (--remove (executable-find (car it)) alist))
+    (let ((buf (get-buffer-create "*Skeletor Rage*")))
+      (with-help-window buf
+        (with-current-buffer buf
+          (insert (concat
+                   "This template requires external tools which "
+                   "could not be found.\n\n"
+                   "See each item below for installation instructions.\n"))
+          (--each not-found
+            (cl-destructuring-bind (program . url) it
+              (insert "\n - ")
+              (insert-button program
+                             'action (lambda (x) (browse-url (button-get x 'url)))
+                             'url url))))))
+    (user-error "Cannot find executable(s) needed to create project")))
 
 ;;; ----------------------------- Internal -------------------------------------
 
@@ -357,7 +381,8 @@ replacement."
                                       replacements
                                       (after-creation 'ignore)
                                       default-license
-                                      (license-file-name "COPYING"))
+                                      (license-file-name "COPYING")
+                                      requires-executables)
   "Declare a new project type.
 
 * NAME is a string naming the project type. A corresponding
@@ -372,13 +397,23 @@ replacement."
 
 * AFTER-CREATION is a unary function to be run once the project
   is created. It should take a single argument--the path to the
-  newly-created project."
+  newly-created project.
+
+* REQUIRES-EXECUTABLES is an alist of `(PROGRAM . URL)'
+  expressing programs needed to expand this skeleton. See
+  `skel-require-executables'."
   (declare (indent 1))
   (cl-assert (or (symbolp name) (stringp name)) t)
   (cl-assert (stringp license-file-name) t)
   (let ((constructor (intern (format "skel--create-%s" name)))
         (default-license-var (intern (format "%s-default-license" name)))
-        (rs (eval replacements)))
+        (rs (eval replacements))
+        (exec-alist (eval requires-executables)))
+
+    (cl-assert (listp requires-executables) t)
+    (cl-assert (-all? 'stringp (-map 'car exec-alist)) t)
+    (cl-assert (-all? 'stringp (-map 'cdr exec-alist)) t)
+
     (cl-assert (listp rs) t)
     (cl-assert (-all? 'stringp (-map 'car rs)) t)
 
@@ -400,8 +435,10 @@ replacement."
 * LICENSE-FILE is the path to a license file to be added to the project.")
 
          (interactive
-          (list (skel--read-project-name)
-                (skel--read-license "License: " (eval ,default-license-var))))
+          (progn
+            (skel-require-executables ',exec-alist)
+            (list (skel--read-project-name)
+                  (skel--read-license "License: " (eval ,default-license-var)))))
 
          (let* ((dest (f-join skel-project-directory project-name))
                 (default-directory dest)
@@ -452,6 +489,8 @@ TYPE is the name of an existing project skeleton."
 ;;; ------------------------ Built-in skeletons --------------------------------
 
 (define-project-skeleton "elisp-package"
+  :requires-executables '(("make" . "http://www.gnu.org/software/make/")
+                          ("cask" . "https://github.com/cask/cask"))
   :default-license (rx bol "gpl")
   :replacements
   '(("__DESCRIPTION__"
@@ -479,6 +518,8 @@ TYPE is the name of an existing project skeleton."
     (kill-buffer)))
 
 (define-project-skeleton "python-library"
+  :requires-executables '(("make" . "http://www.gnu.org/software/make/")
+                          ("virtualenv" . "http://www.virtualenv.org"))
   :replacements '(("__PYTHON-BIN__" . skel-py--read-python-bin))
   :after-creation
   (lambda (dir)
@@ -508,6 +549,7 @@ Sandboxes were introduced in cabal 1.18 ."
       (or (< 1 maj) (<= 18 min)))))
 
 (define-project-skeleton "haskell-executable"
+  :requires-executables '(("cabal" . "http://www.haskell.org/cabal/"))
   :license-file-name "LICENSE"
   :replacements
   '(("__SYNOPSIS__"

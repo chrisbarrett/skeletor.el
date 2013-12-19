@@ -18,18 +18,18 @@ to easily create your own.
 <li><a href="#creating-projects">2. Creating Projects</a></li>
 <li><a href="#defining-project-templates">3. Defining Project Templates</a>
 <ul>
-<li><a href="#structure">3.1. Project Skeletons</a></li>
-<li><a href="#token-expansion">3.2. External Tools</a></li>
+<li><a href="#project-skeletons">3.1. Project Skeletons</a></li>
+<li><a href="#external-tools">3.2. External Tools</a></li>
 </ul>
 </li>
-<li><a href="#defining-project-templates">4. Variables and Expansions in Templates</a>
+<li><a href="#variables-and-expansions-in-templates">4. Variables and Expansions in Templates</a>
 <ul>
-<li><a href="#structure">4.1. Token Expansion</a></li>
-<li><a href="#token-expansion">4.2. Embedded Elisp</a></li>
+<li><a href="#token-expansion">4.1. Token Expansion</a></li>
+<li><a href="#embedded-elisp">4.2. Embedded Elisp</a></li>
 </ul>
 </li>
 <li><a href="#contributing">5. Contributing</a></li>
-<li><a href="#contributing">6. Acknowledgements</a></li>
+<li><a href="#acknowledgements">6. Acknowledgements</a></li>
 <li><a href="#license">6. License</a></li>
 </ul>
 </li>

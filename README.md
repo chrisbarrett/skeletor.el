@@ -10,8 +10,8 @@ to easily create your own.
 
 ![Skeletor Laughing](assets/skeletor.jpg)
 
-<div id="table-of-contents">
-<h2>Table of Contents</h2>
+## Table of Contents
+
 <div id="text-table-of-contents">
 <ul>
 <li><a href="#installation">1. Installation</a></li>
@@ -29,7 +29,6 @@ to easily create your own.
 </ul>
 </li>
 </ul>
-</div>
 </div>
 
 ## Installation

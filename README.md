@@ -22,7 +22,7 @@ to easily create your own.
 <li><a href="#token-expansion">3.2. External Tools</a></li>
 </ul>
 </li>
-<li><a href="#defining-project-templates">4. Variable and Expansions in Templates</a>
+<li><a href="#defining-project-templates">4. Variables and Expansions in Templates</a>
 <ul>
 <li><a href="#structure">4.1. Token Expansion</a></li>
 <li><a href="#token-expansion">4.2. Embedded Elisp</a></li>

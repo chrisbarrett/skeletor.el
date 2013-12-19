@@ -211,15 +211,28 @@ Return a SkeletorExpansionSpec.
      (--map (cons it (expand it)) (SkeletorTemplate-files template))
      (--map (cons it (expand it)) (SkeletorTemplate-dirs template)))))
 
+(defun skel--evaluate-elisp-exprs-in-string (str)
+  "Evaluate any elisp expressions in string STR.
+An expression has the form \"__(expr)__\"."
+  (with-temp-buffer
+    (insert str)
+    (goto-char (point-min))
+    (let ((sexp-prod (rx "__" (group "(" (+? anything)")") "__")))
+      (while (search-forward-regexp sexp-prod nil t)
+        (replace-match (pp-to-string (eval (read (match-string 1)))) t)))
+    (buffer-string)))
+
 ;; [(String,String)], String -> String
 (defun skel--replace-all (replacements str)
   "Expand REPLACEMENTS in STR with fixed case.
 Like `s-replace-all' but preserves case of the case of the
 replacement."
-  (replace-regexp-in-string (regexp-opt (-map 'car replacements))
-                            (lambda (it)
-                              (cdr (assoc it replacements)))
-                            str 'fixcase))
+  (let ((expanded (skel--evaluate-elisp-exprs-in-string str)))
+    (if replacements
+        (replace-regexp-in-string (regexp-opt (-map 'car replacements))
+                                  (lambda (it) (cdr (assoc it replacements)))
+                                  expanded 'fixcase)
+      expanded)))
 
 (defun skel--validate-replacements (alist)
   "Assert that ALIST will be accepted by `s-replace-all'."

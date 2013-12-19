@@ -120,6 +120,15 @@ Elements are compared using `equal'."
          (replacements (list (cons token expected))))
     (should (equal expected (skel--replace-all replacements token)))))
 
+(ert-deftest replacements-are-idempotent-when-no-tokens-in-alist ()
+    (let ((input (symbol-name (cl-gensym))))
+      (should (equal input (skel--replace-all nil input)))))
+
+(ert-deftest evaluates-embedded-elisp-in-file-templates ()
+  (let ((x (random 100))
+        (y (random 100)))
+    (should (equal (* x y) (read (skel--replace-all nil "__(* x y)__"))))))
+
 ;;; Integration tests
 
 (skel--instantiate-skeleton-dir test-replacements template-path destination-path)

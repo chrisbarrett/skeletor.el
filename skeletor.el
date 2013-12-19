@@ -476,6 +476,72 @@ replacement."
        (add-to-list 'skel--project-skeletons (cons ,name ',constructor)))))
 
 ;;;###autoload
+(cl-defmacro define-skeleton-constructor (name
+                                          &key
+                                          initialise
+                                          no-git?
+                                          requires-executables)
+  "Define a new project type with a custom way of constructing a skeleton.
+This can be used to add bindings for command-line tools.
+
+* NAME is a string naming the project type in the UI.
+
+* INITIALISE is a binary function that creates the project
+  structure. It will be passed a name for the project, read from
+  the user, and the current value of `skel-project-directory'.
+
+  INITIALISE is expected to initialise the new project at
+  skel-project-directory/NAME. The command should signal an error
+  if this fails for any reason.
+
+  Make sure to switch to a shell buffer if INITIALISE is a shell
+  command that requires user interaction.
+
+* When NO-GIT? is t, the project will not be initialised with a
+  git repo, regardless of the value of `skel-init-with-git'.
+
+* REQUIRES-EXECUTABLES is an alist of `(PROGRAM . URL)'
+  expressing programs needed to expand this skeleton. See
+  `skel-require-executables'."
+  (declare (indent 1))
+  (cl-assert (or (symbolp name) (stringp name)) t)
+  (cl-assert (functionp initialise))
+  (let ((constructor (intern (format "skel--create-%s" name)))
+        (exec-alist (eval requires-executables)))
+    (cl-assert (listp requires-executables) t)
+    (cl-assert (-all? 'stringp (-map 'car exec-alist)) t)
+    (cl-assert (-all? 'stringp (-map 'cdr exec-alist)) t)
+
+    `(progn
+       (defun ,constructor (project-name)
+
+         ,(concat
+           "Auto-generated function.\n\n"
+           "Interactively creates a new " name " skeleton.\n"
+           "
+* PROJECT-NAME is the name of this project instance.")
+         (interactive
+          (progn
+            (skel-require-executables ',exec-alist)
+            (list (skel--read-project-name))))
+
+         (let* ((dest (f-join skel-project-directory project-name))
+                (default-directory dest))
+
+           (save-window-excursion
+             (funcall #',initialise project-name skel-project-directory)
+             (unless ,no-git?
+               (skel--initialize-git-repo dest))
+             (run-hook-with-args 'skel-after-project-instantiated-hook default-directory))
+
+           (when skel-show-project-command
+             (funcall skel-show-project-command dest))
+
+           (message "Project created at %s" dest)))
+
+       (add-to-list 'skel--project-skeletons (cons ,name ',constructor)))))
+
+;;;###autoload
 (defun create-project (type)
   "Interactively create a new project with Skeletor.
 TYPE is the name of an existing project skeleton."

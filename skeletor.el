@@ -82,7 +82,7 @@ evaluated or a function that will be called."
   :type '(alist :key-type 'string
                 :value-type (choice string variable function)))
 
-(defcustom skel-init-with-git t
+(defcustom skel-init-with-git (executable-find "git")
   "When non-nil, initialise newly created projects with a git repository."
   :group 'skeletor
   :type 'boolean)

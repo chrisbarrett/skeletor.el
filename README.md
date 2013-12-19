@@ -20,6 +20,7 @@ to easily create your own.
 <ul>
 <li><a href="#structure">3.1. Structure</a></li>
 <li><a href="#token-expansion">3.2. Token Expansion</a></li>
+<li><a href="#token-expansion">3.3. Embedded Elisp</a></li>
 </ul>
 </li>
 <li><a href="#contributing">4. Contributing</a></li>
@@ -98,8 +99,14 @@ configuration if necessary:
 
 ### Token Expansion
 
-Filenames and file contents may contain special tokens that will be expanded
-when the project is created. For example, a template file with the contents:
+File and directory names may contain special tokens that will be expanded when a
+project is created.
+
+For example, the elisp template contains a file named `__PROJECT-NAME__.el`.
+Given a project named *foo*, this would be expanded as `foo.el`.
+
+The same principle applies to the contents of files in a template. A file with
+the contents:
 
     Title: Secret Plans
     Project: __PROJECT-NAME__
@@ -114,6 +121,19 @@ could be instantiated as the following:
 The variable `skel-global-replacements` defines the replacements available in
 all project templates, and each template may declare its own special
 replacements.
+
+### Embedded Elisp
+
+Template files may contain embedded Elisp expressions that will be evaluated and
+replaced when the project is created. For example, a file with the contents:
+
+    Current Time: __(format-time-string "%c")__
+    Current OS:   __(shell-command-to-string "uname")__
+
+Could expand to:
+
+    Current Time: Thu Dec 19 16:14:35 2013
+    Current OS:   Darwin
 
 ## Contributing
 

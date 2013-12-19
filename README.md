@@ -129,7 +129,7 @@ replaced when the project is created. For example, a file with the contents:
     Current Time: __(format-time-string "%c")__
     Current OS:   __(shell-command-to-string "uname")__
 
-Could expand to:
+could expand to:
 
     Current Time: Thu Dec 19 16:14:35 2013
     Current OS:   Darwin

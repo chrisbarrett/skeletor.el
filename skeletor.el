@@ -116,19 +116,25 @@ when initialising virtualenv."
 
 ;;; -------------------------- Public Utilities --------------------------------
 
-(defun skel-shell-command (dir command)
-  "Run a shell command.
+(defun skel-shell-command (dir command &optional no-assert)
+  "Run a shell command and return its exit status.
 
 * DIR is an unquoted path at which to run the command.
 
-* COMMAND is the shell command to execute."
-  (let ((buf (get-buffer-create
-              (format "*Skeletor [%s]*" dir))))
+* COMMAND is the shell command to execute.
+
+* An error will be raised on a non-zero result, unless NO-ASSERT
+  is t."
+  (let ((buf (get-buffer-create (format "*Skeletor [%s]*" dir))))
     (with-current-buffer buf
       (erase-buffer))
-    (shell-command
-     (format "cd %s && %s" (shell-quote-argument dir) command)
-     buf)))
+    (let ((result (shell-command (format "cd %s && %s" (shell-quote-argument dir) command)
+                                 buf
+                                 (format "*Skeleton Errors [%s]*" dir))))
+      (unless no-assert
+        (cl-assert (zerop result) nil
+                   "Skeleton creation failed--see the output buffer for details"))
+      result)))
 
 (defun skel-async-shell-command (dir command)
   "Run an async shell command.

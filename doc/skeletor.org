@@ -105,7 +105,7 @@ initialise a git repository at the root of the project.
 **** Titles
 
 You can set a custom title for your project type using the =:title= keyword
-argument.
+parameter.
 
 #+begin_src elisp
 (skeletor-define-template "my-elisp-package"
@@ -134,9 +134,9 @@ don't have to specify the license name precisely.
 
 **** Custom Actions
 
-You can use the =:after-creation= keyword argument to perform additional actions
-after a project has been created. It takes a single-argument function taking the
-path to the newly-created project.
+You can use the =:after-creation= keyword parameter to perform additional
+actions after a project has been created. It takes a single-parameter function
+taking the path to the newly-created project.
 
 For example, the Elisp project runs a Makefile task in the background to
 configure the development environment:
@@ -171,7 +171,7 @@ special buffers and assert that their shell commands were successful.
 
 Because such external tools may not be installed on every system, Skeletor
 provides a way to declare these requirements up-front using the
-=:requires-executables= keyword argument. It takes an alist of =(PROGRAM .
+=:requires-executables= keyword parameter. It takes an alist of =(PROGRAM .
 URL)=, where =URL= is a link to a project page or download instructions.
 
 For example, the =elisp-package= template uses =make= and =Cask= to bootstrap

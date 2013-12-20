@@ -706,6 +706,7 @@ Sandboxes were introduced in cabal 1.18 ."
 
 (define-skeleton-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
+  :no-license? t
   :initialise
   (lambda (name project-dir)
     (skel-shell-command

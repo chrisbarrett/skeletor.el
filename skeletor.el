@@ -504,6 +504,9 @@ replacement."
                                           &key
                                           initialise
                                           no-git?
+                                          no-license?
+                                          default-license
+                                          (license-file-name "COPYING")
                                           requires-executables)
   "Define a new project type with a custom way of constructing a skeleton.
 This can be used to add bindings for command-line tools.
@@ -524,36 +527,73 @@ This can be used to add bindings for command-line tools.
 * When NO-GIT? is t, the project will not be initialised with a
   git repo, regardless of the value of `skel-init-with-git'.
 
+* When NO-LICENSE? is t, the project will not be initialised with
+  a license file.
+
+* DEFAULT-LICENSE is a regexp matching the name of a license to
+  be used as the default when reading from the user.
+
+* LICENSE-FILE-NAME is the filename to use for the generated
+  license file.
+
 * REQUIRES-EXECUTABLES is an alist of `(PROGRAM . URL)'
   expressing programs needed to expand this skeleton. See
   `skel-require-executables'."
   (declare (indent 1))
   (cl-assert (stringp title) t)
+  (cl-assert (stringp license-file-name) t)
   (cl-assert (functionp initialise) t)
   (let ((constructor (intern (format "skel--create-%s" title)))
+        (default-license-var (intern (format "%s-default-license"
+                                             (s-replace " " "-" title))))
         (exec-alist (eval requires-executables)))
     (cl-assert (listp requires-executables) t)
     (cl-assert (-all? 'stringp (-map 'car exec-alist)) t)
     (cl-assert (-all? 'stringp (-map 'cdr exec-alist)) t)
 
     `(progn
-       (defun ,constructor (project-name)
+
+       (defvar ,default-license-var ,default-license
+         ,(concat "Auto-generated variable.\n\n"
+                  "The default license type for " title " skeletons.") )
+       ;; Update the variable if the definition is re-evaluated.
+       (setq ,default-license-var ,default-license)
+
+
+       (defun ,constructor (project-name license-file)
 
          ,(concat
            "Auto-generated function.\n\n"
            "Interactively creates a new " title " skeleton.\n"
            "
-* PROJECT-NAME is the name of this project instance.")
+* PROJECT-NAME is the name of this project instance.
+
+* LICENSE-FILE is the path to a license file to be added to the project.")
+
          (interactive
           (progn
             (skel-require-executables ',exec-alist)
-            (list (skel--read-project-name))))
+            (list (skel--read-project-name)
+                  (unless ,no-license?
+                    (skel--read-license "License: " (eval ,default-license-var))))))
 
          (let* ((dest (f-join skel-project-directory project-name))
-                (default-directory dest))
+                (default-directory dest)
+                (repls (-map 'skel--eval-replacement
+                             (-concat
+                              skel-global-replacements
+                              (list (cons "__PROJECT-NAME__"
+                                          project-name)
+                                    (cons "__LICENSE-FILE-NAME__"
+                                          ,license-file-name))))))
 
            (save-window-excursion
+             (unless (f-exists? skel-project-directory)
+               (make-directory skel-project-directory t))
              (funcall #',initialise project-name skel-project-directory)
+             (when license-file
+               (skel--instantiate-license-file
+                license-file (f-join dest ,license-file-name) repls))
              (unless ,no-git?
                (skel--initialize-git-repo dest))
              (run-hook-with-args 'skel-after-project-instantiated-hook default-directory))

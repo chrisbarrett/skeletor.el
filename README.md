@@ -1,6 +1,4 @@
-# skeletor.el
-
-[![Build Status](https://travis-ci.org/chrisbarrett/skeletor.el.png?branch=master)](https://travis-ci.org/chrisbarrett/skeletor.el)
+# <img align="right" src="assets/skeletor.jpg"> skeletor.el [![Build Status](https://travis-ci.org/chrisbarrett/skeletor.el.png?branch=master)](https://travis-ci.org/chrisbarrett/skeletor.el)
 
 Skeletor provides project templates for Emacs. It also automates the mundane
 parts of setting up a new project like version control, licenses and tooling.
@@ -8,58 +6,60 @@ parts of setting up a new project like version control, licenses and tooling.
 Skeletor comes with a number of predefined predefined templates and allows you
 to easily create your own.
 
-![Skeletor Laughing](assets/skeletor.jpg)
-
-## Table of Contents
-
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#supported-project-types">1. Supported Project Types</a></li>
-<li><a href="#installation">2. Installation</a></li>
-<li><a href="#creating-projects">3. Creating Projects</a></li>
-<li><a href="#defining-project-templates">4. Defining Project Templates</a>
+<li><a href="#sec-1">1. Supported Project Types</a></li>
+<li><a href="#sec-2">2. Installation</a></li>
+<li><a href="#sec-3">3. Usage</a></li>
+<li><a href="#sec-4">4. Extending</a>
 <ul>
-<li><a href="#project-skeletons">4.1. Project Skeletons</a></li>
-<li><a href="#external-tools">4.2. External Tools</a></li>
-</ul>
-</li>
-<li><a href="#variables-and-expansions-in-templates">5. Variables and Expansions in Templates</a>
+<li><a href="#sec-4-1">4.1. Project Skeletons</a>
 <ul>
-<li><a href="#substitutions">5.1. Substitutions</a></li>
-<li><a href="#embedded-elisp">5.2. Embedded Elisp</a></li>
+<li><a href="#sec-4-1-1">4.1.1. Creating a Skeleton Directory</a></li>
+<li><a href="#sec-4-1-2">4.1.2. Configuring the Skeleton</a></li>
 </ul>
 </li>
-<li><a href="#contributing">6. Contributing</a></li>
-<li><a href="#acknowledgements">7. Acknowledgements</a></li>
-<li><a href="#license">7. License</a></li>
+<li><a href="#sec-4-2">4.2. Substitutions</a>
+<ul>
+<li><a href="#sec-4-2-1">4.2.1. Introduction</a></li>
+<li><a href="#sec-4-2-2">4.2.2. Specifying Substitutions</a></li>
+<li><a href="#sec-4-2-3">4.2.3. Embedded Elisp</a></li>
 </ul>
 </li>
+<li><a href="#sec-4-3">4.3. External Tools</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">5. Contributing</a></li>
+<li><a href="#sec-6">6. Acknowledgements</a></li>
+<li><a href="#sec-7">7. License</a></li>
 </ul>
 </div>
+</div>
 
-## Supported Project Types
+## Supported Project Types ##
 
 Skeletor comes with predefined project types so it is useful out-of-the-box:
 
-- Clojure
-- Elisp
-- Haskell
-- Python
-- Ruby
+-   Clojure
+-   Elisp
+-   Haskell
+-   Python
+-   Ruby
 
-## Installation
+Skeletor is designed to be extensible so you can create your own templates.
 
-You will need Emacs 24+, `make` and [Cask](https://github.com/cask/cask) to
-build the project.
+## Installation ##
 
-```sh
-cd
-git clone git@github.com:chrisbarrett/skeletor.el.git
-cd skeletor
-make && make install
-```
+You will need Emacs 24+, `make` and [Cask](https://github.com/cask/cask) to build the project.
 
-## Creating Projects
+    cd
+    git clone git@github.com:chrisbarrett/skeletor.el.git
+    cd skeletor
+    make && make install
+
+## Usage ##
 
 Use `M-x skeletor-create-project` to create a new project based on an existing template.
 You will be guided through any configuration needed.
@@ -67,24 +67,36 @@ You will be guided through any configuration needed.
 By default, new projects are created in `~/Projects`. Customise
 `skeletor-project-directory` to change this.
 
-## Defining Project Templates
+## Extending ##
 
-### Project Skeletons
+Skeletor allows you to define new types of projects. You can either create a
+project template, called a *skeleton*, or you can use an external tool to create
+the project and use Skeletor to perform additional configuration.
 
-Project skeletons are prepared project templates that are used to construct new
-projects. There are two parts to defining a new project skeleton:
+### Project Skeletons ###
 
-1. Create a template directory in the `skeletor-user-directory`. It can contain any
-   files and directories you'd like.
+Project skeletons are templates for constructing new projects. The following
+discussion will use the terms *skeleton* and *template* interchangeably.
 
-2. Use the `skeletor-define-template` macro to configure how the project template
-   will be created.
+There are two parts to defining a new project skeleton, discussed in the
+following sections.
 
-For example, here's the directory structure of the
-[elisp-package](https://github.com/chrisbarrett/skeletor.el/tree/master/project-skeletons/elisp-package)
-template:
+#### Creating a Skeleton Directory ####
 
-    elisp-package/
+Skeletor uses physical files and directories to represent project templates.
+When you create a project, Skeletor will copy the template directory and apply
+certain transformations.
+
+To create a template, make a new directory in `skeletor-user-directory`. It can
+contain any files and directories you'd like.
+
+It is a good idea to add any files needed for distributing the project source.
+Most of the templates that ship with Skeletor include a Makefile, `.gitignore`,
+README and contributing guidelines.
+
+Below is an example project skeleton structure for Emacs Lisp:
+
+    my-elisp-package/
     |-- .gitignore
     |-- CONTRIBUTING.md
     |-- Cask
@@ -94,99 +106,223 @@ template:
     `-- doc
         `-- __PROJECT-NAME__.org
 
-And here's a corresponding configuration:
+Note that Skeletor will handle the creation of a license file itself, so you
+should not add one to your skeleton.
 
-```lisp
-(skeletor-define-template "elisp-package")
-```
+#### Configuring the Skeleton ####
 
-The above definition generates all the bindings you need to start using the
-skeleton. `skeletor-define-template` also allows you to perform more specialised
-configuration if necessary:
+Once you have created a project skeleton, use the `skeletor-define-template`
+macro to configure how the project template will be created.
 
-```lisp
-(skeletor-define-template "elisp-package"
-  :default-license (rx bol "gpl")
-  :substitutions '(("__DESCRIPTION__" . (lambda () (read-string "Description: "))))
-  :after-creation
-  (lambda (dir)
-    (skeletor-async-shell-command dir "make env")))
-```
+1.  Basic Configuration
 
-### External Tools
+    In the simplest case, you just need to tell Skeletor the name of the template:
 
-It is possible to use external tools to handle the creation of a project, while
-still using Skeletor to perform additional configuration. The
-`skeletor-define-constructor` macro is similar to `skeletor-define-template`, but
-it lets you use an arbitrary Elisp command to perform the project setup.
+        (skeletor-define-template "my-elisp-package")
 
-The example below uses `bundler` to create a Ruby project, then add RSpec tests.
+    This will add `my-elisp-package` to the list of available projects. You can now
+    create an instance by calling `M-x skeletor-create-project my-elisp-package`. Skeletor
+    will manage the creation of the project, prompt you to choose a license, and
+    initialise a git repository at the root of the project.
 
-```lisp
-(skeletor-define-constructor "Ruby Gem"
-  :requires-executables '(("bundle" . "http://bundler.io"))
-  :initialise
-  (lambda (name project-dir)
-    (skeletor-shell-command
-     project-dir (format "bundle gem %s" (shell-quote-argument name)))
-    (when (and (executable-find "rspec")
-               (y-or-n-p "Create RSpec test suite? "))
-      (skeletor-shell-command (f-join project-dir name) "rspec --init"))))
-```
+2.  Titles
 
-## Variables and Expansions in Templates
+    You can set a custom title for your project type using the `:title` keyword
+    parameter.
 
-### Substitutions
+        (skeletor-define-template "my-elisp-package"
+          :title "My Elisp Package")
 
-File and directory names may contain special tokens that will be expanded when a
-project is created.
+    The title is the string that represents the project in the `skeletor-create-project`
+    prompt.
 
-For example, the elisp template contains a file named `__PROJECT-NAME__.el`.
-Given a project named *foo*, this would be expanded as `foo.el`.
+3.  Default Licenses
 
-The same principle applies to the contents of files in a template. A file with
-the contents:
+    Skeletor will prompt you to select a license when you create a project. Some
+     communities favour a particular license, so Skeletor allows you to pre-populate
+     the license prompt.
 
-    Title: Secret Plans
+    For example, Elisp projects are generally licensed under GPL:
+
+        (skeletor-define-template "my-elisp-package"
+          ; ...
+          :default-license (rx bol "gpl"))
+
+    Note that the argument to `:default-license` is a regular expression so you
+    don't have to specify the license name precisely.
+
+4.  Custom Actions
+
+    You can use the `:after-creation` keyword parameter to perform additional
+    actions after a project has been created. It takes a single-parameter function
+    taking the path to the newly-created project.
+
+    For example, the Elisp project runs a Makefile task in the background to
+    configure the development environment:
+
+        (skeletor-define-template "elisp-package"
+          ; ...
+          :after-creation
+          (lambda (dir)
+            (skeletor-async-shell-command dir "make env")))
+
+    You can do anything you want in the `after-creation` command, but it is a good
+    idea to automate as much of the environment setup as possible using a makefile
+    or shell script. This will help other developers who want to contribute to your
+    project.
+
+5.  External Tools
+
+    Sometimes you need to use an external tool to perform part of the project
+    configuration. Skeletor provides the `skeletor-shell-command` and
+    `skeletor-async-shell-command` functions for this purpose. These functions output to
+    special buffers and assert that their shell commands were successful.
+
+        (skeletor-define-template "elisp-package"
+          ; ...
+          :after-creation
+          (lambda (dir)
+            (skeletor-async-shell-command dir "make env")))
+
+    Because such external tools may not be installed on every system, Skeletor
+    provides a way to declare these requirements up-front using the
+    `:requires-executables` keyword parameter. It takes an alist of `(PROGRAM .
+    URL)`, where `URL` is a link to a project page or download instructions.
+
+    For example, the `elisp-package` template uses `make` and `Cask` to bootstrap
+    the development environment and declares its dependency on these programs:
+
+        (skeletor-define-template "elisp-package"
+          ; ...
+          :requires-executables '(("make" . "http://www.gnu.org/software/make/")
+                                  ("cask" . "https://github.com/cask/cask")))
+
+    Skeletor will search for these two programs when creating an instance of the
+    template. It will display a help window with download links if either of them
+    cannot be found.
+
+### Substitutions ###
+
+Skeletor can perform text substitutions when it creates new projects. This makes
+it possible to refer to the name of the project, add time-stamps and customise
+the contents of files according to user input when a project is created.
+
+#### Introduction ####
+
+The `__PROJECT-NAME__` substitution is a useful example. Given the following
+skeleton,
+
+    my-elisp-package/
+    |-- __PROJECT-NAME__.el
+    `-- doc
+        `-- __PROJECT-NAME__.org
+
+the project name entered by the user will be used to name the files. Given a
+project named *foo*, Skeletor would instantiate this skeleton as:
+
+    foo/
+    |-- foo.el
+    `-- doc
+        `-- foo.org
+
+Substitutions are also applied to the text inside files. A file with the
+contents,
+
+    Name: __USER-NAME__
     Project: __PROJECT-NAME__
-    Author: __USER-NAME__
 
-could be instantiated as the following:
+might be expanded as:
 
-    Title: Secret Plans
-    Project: Capture Battle-Cat
-    Author: Skeletor
+    Name: Jane Coder
+    Project: foo
 
-The variable `skeletor-global-substitutions` defines the substitutions available in
-all project templates, and each template may declare its own special
-substitutions.
+#### Specifying Substitutions ####
 
-### Embedded Elisp
+The `skeletor-global-substitutions` variable defines the substitutions available to
+all skeletons. It is an alist, where each element is a cons of `(STRING .
+REPLACEMENT)`. `REPLACEMENT` should be a string literal, a variable name, a
+function name, or a lambda expression.
 
-Template files may contain embedded Elisp expressions that will be evaluated and
-replaced when the project is created. For example, a file with the contents:
+You can add your own items to `skel-globl-substitutions`. For example:
+
+    (add-to-list 'skeletor-global-substitutions
+                 '("__ORGANISATION__" "Masters of the Universe"))
+
+    (add-to-list 'skeletor-global-substitutions
+                 (cons "__HOME__" (getenv "HOME")))
+
+    (add-to-list 'skeletor-global-substitutions
+                 (cons "__TIME__" (lambda () (format-time-string "%c"))))
+
+You can also define substitutions available to individual skeletons:
+
+    (skeletor-define-template "my-package"
+      :substitutions
+      '(("__DESCRIPTION__" . (lambda () (read-string "Description: ")))))
+
+This will prompt you to enter a description when creating an instance of this
+project.
+
+#### Embedded Elisp ####
+
+Template files may contain embedded Elisp expressions that will be evaluated
+when the project is created. The expression will be replaced by its result. The
+syntax is `__(expression)__`.
+
+For example, a template file with the contents:
 
     Current Time: __(format-time-string "%c")__
     Current OS:   __(shell-command-to-string "uname")__
 
-could expand to:
+could be expanded to:
 
     Current Time: Thu Dec 19 16:14:35 2013
     Current OS:   Darwin
 
-## Contributing
+### External Tools ###
+
+Some communities have well-established tools for creating projects from
+templates. Skeletor may still be used to orchestrate these tools and perform
+additional setup steps.
+
+Skeletor provides the `skeletor-define-constructor` macro for this purpose. It
+is similar to `skeletor-define-template`, but it requires you supply a function
+that creates the project structure itself.
+
+For example, [Bundler](http://bundler.io) is a popular tool in the Ruby community that can create new
+Ruby projects. Skeletor provides the following binding:
+
+    (skeletor-define-constructor "Ruby Gem"
+      :requires-executables '(("bundle" . "http://bundler.io"))
+      :no-license? t
+
+      :initialise
+      (lambda (name project-dir)
+        (skeletor-shell-command
+         project-dir (format "bundle gem %s" (shell-quote-argument name))))
+
+      :after-creation
+      (lambda (dir)
+        (when (and (executable-find "rspec")
+                   (y-or-n-p "Create RSpec test suite? "))
+          (skeletor-shell-command dir "rspec --init"))))
+
+Skeletor will use `bundle` to create the project structure, offer to create an
+RSpec test suite, then add everything to version control.
+
+## Contributing ##
 
 Yes, please do! More project types are especially welcome. Read over
 [CONTRIBUTING](https://github.com/chrisbarrett/skeletor.el/blob/master/CONTRIBUTING.md)
 for guidelines.
 
-## Acknowledgements
+## Acknowledgements ##
 
 Muchas gracias to [@magnars](https://twitter.com/magnars) and
 [@rejeep](https://twitter.com/rejeep) for their excellent libraries and tooling.
 You guys are stars!
 
-## License
+## License ##
 
 See [COPYING](https://github.com/chrisbarrett/skeletor.el/blob/master/COPYING).
 Copyright (c) 2013 Chris Barrett.

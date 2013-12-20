@@ -7,12 +7,14 @@
 #+TEXINFO_DIR_TITLE: __PROJECT-NAME__
 #+TEXINFO_DIR_DESC: __TODO__
 
-# This file is used to generate the info manual for __PROJECT-NAME__. It will be
-# automatically built by the `doc` task in the makefile. This requires org-mode
-# 8.0 or later for the texinfo exporter.
+* README                                                           :noexport:
+This file is used to generate the info manual for Skeletor. It will be
+automatically built by the `doc` task in the makefile. This requires org-mode
+8.0 or later for the texinfo exporter.
 
 * Overview
+* Installation
 * Usage
 * Extending
-* Contributing
-* License
+* GNU Free Documentation License
+@@info:@include fdl-1.3.texi@@

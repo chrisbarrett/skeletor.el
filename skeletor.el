@@ -715,6 +715,37 @@ Sandboxes were introduced in cabal 1.18 ."
                (y-or-n-p "Create RSpec test suite? "))
       (skel-shell-command (f-join project-dir name) "rspec --init"))))
 
+(defvar skel--clojure-project-types-cache nil
+  "A list of strings representing the available Leiningen templates.")
+
+(defun skel--clojure-project-types ()
+  "Parse the project templates known to Leiningen.
+Return a list of strings representing the available templates.
+
+This is a lengthy operation so the results are cached to
+`skel--clojure-project-types-cache'."
+  (or skel--clojure-project-types-cache
+      (let ((types (->> (shell-command-to-string "lein help new")
+                     (s-match
+                      (rx bol "Subtasks available:\n" (group (+? anything)) "\n\n"))
+                     cadr
+                     (s-split "\n")
+                     (--keep (cadr (s-match (rx bol (* space) (group (+ (not space))))
+                                            it))))))
+        (prog1 types
+          (setq skel--clojure-project-types-cache types)))))
+
+(define-skeleton-constructor "Clojure Project"
+  :requires-executables '(("lein" . "http://leiningen.org/"))
+  :initialise
+  (lambda (name project-dir)
+    (message "Finding Leningien templates...")
+    (let ((type (ido-completing-read
+                 "Template: " (skel--clojure-project-types) nil t "default")))
+      (skel-shell-command project-dir (format "lein new %s %s"
+                                              (shell-quote-argument type)
+                                              (shell-quote-argument name))))))
+
 (provide 'skeletor)
 
 ;;; skeletor.el ends here

@@ -54,14 +54,14 @@
 
 (setq destination-path  (make-temp-file "skeletor-test_" t)
 
-      template-instance (skel--dir->SkeletorTemplate template-path)
+      template-instance (skeletor--dir->SkeletorTemplate template-path)
 
       test-token (concat "MiXcAsE" (md5 (number-to-string (random))))
 
       test-substitutions `(("__PROJECT-NAME__" . ,template-name)
                           ("__TOKEN__"        . ,test-token))
 
-      spec-instance     (skel--expand-template-paths test-substitutions
+      spec-instance     (skeletor--expand-template-paths test-substitutions
                                                      destination-path
                                                      template-instance))
 
@@ -118,20 +118,20 @@ Elements are compared using `equal'."
   (let* ((token "__REPL__")
          (expected "test TEST tEsT")
          (substitutions (list (cons token expected))))
-    (should (equal expected (skel--replace-all substitutions token)))))
+    (should (equal expected (skeletor--replace-all substitutions token)))))
 
 (ert-deftest substitutions-are-idempotent-when-no-tokens-in-alist ()
     (let ((input (symbol-name (cl-gensym))))
-      (should (equal input (skel--replace-all nil input)))))
+      (should (equal input (skeletor--replace-all nil input)))))
 
 (ert-deftest evaluates-embedded-elisp-in-file-templates ()
   (let ((x (random 100))
         (y (random 100)))
-    (should (equal (* x y) (read (skel--replace-all nil "__(* x y)__"))))))
+    (should (equal (* x y) (read (skeletor--replace-all nil "__(* x y)__"))))))
 
 ;;; Integration tests
 
-(skel--instantiate-skeleton-dir test-substitutions template-path destination-path)
+(skeletor--instantiate-skeleton-dir test-substitutions template-path destination-path)
 
 (ert-deftest instantiates-all-files-in-template ()
   (should (equal (length (f-files template-path nil t))

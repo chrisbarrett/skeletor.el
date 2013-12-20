@@ -27,7 +27,7 @@ repository. Follow the guidelines below to make sure everything goes smoothly.
 Add a prefix for all internal names.
 
 Use a namespace prefix followed by two dashes for internal names, e.g.
-  `skel--internal-function`.
+  `skeletor--internal-function`.
 
 ### Docstrings
 

@@ -61,11 +61,11 @@ make && make install
 
 ## Creating Projects
 
-Use `M-x create-project` to create a new project based on an existing template.
+Use `M-x skeletor-create-project` to create a new project based on an existing template.
 You will be guided through any configuration needed.
 
 By default, new projects are created in `~/Projects`. Customise
-`skel-project-directory` to change this.
+`skeletor-project-directory` to change this.
 
 ## Defining Project Templates
 
@@ -74,10 +74,10 @@ By default, new projects are created in `~/Projects`. Customise
 Project skeletons are prepared project templates that are used to construct new
 projects. There are two parts to defining a new project skeleton:
 
-1. Create a template directory in the `skel-user-directory`. It can contain any
+1. Create a template directory in the `skeletor-user-directory`. It can contain any
    files and directories you'd like.
 
-2. Use the `define-project-skeleton` macro to configure how the project template
+2. Use the `skeletor-define-template` macro to configure how the project template
    will be created.
 
 For example, here's the directory structure of the
@@ -97,41 +97,41 @@ template:
 And here's a corresponding configuration:
 
 ```lisp
-(define-project-skeleton "elisp-package")
+(skeletor-define-template "elisp-package")
 ```
 
 The above definition generates all the bindings you need to start using the
-skeleton. `define-project-skeleton` also allows you to perform more specialised
+skeleton. `skeletor-define-template` also allows you to perform more specialised
 configuration if necessary:
 
 ```lisp
-(define-project-skeleton "elisp-package"
+(skeletor-define-template "elisp-package"
   :default-license (rx bol "gpl")
   :substitutions '(("__DESCRIPTION__" . (lambda () (read-string "Description: "))))
   :after-creation
   (lambda (dir)
-    (skel-async-shell-command dir "make env")))
+    (skeletor-async-shell-command dir "make env")))
 ```
 
 ### External Tools
 
 It is possible to use external tools to handle the creation of a project, while
 still using Skeletor to perform additional configuration. The
-`define-skeleton-constructor` macro is similar to `define-project-skeleton`, but
+`skeletor-define-constructor` macro is similar to `skeletor-define-template`, but
 it lets you use an arbitrary Elisp command to perform the project setup.
 
 The example below uses `bundler` to create a Ruby project, then add RSpec tests.
 
 ```lisp
-(define-skeleton-constructor "Ruby Gem"
+(skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
   :initialise
   (lambda (name project-dir)
-    (skel-shell-command
+    (skeletor-shell-command
      project-dir (format "bundle gem %s" (shell-quote-argument name)))
     (when (and (executable-find "rspec")
                (y-or-n-p "Create RSpec test suite? "))
-      (skel-shell-command (f-join project-dir name) "rspec --init"))))
+      (skeletor-shell-command (f-join project-dir name) "rspec --init"))))
 ```
 
 ## Variables and Expansions in Templates
@@ -157,7 +157,7 @@ could be instantiated as the following:
     Project: Capture Battle-Cat
     Author: Skeletor
 
-The variable `skel-global-substitutions` defines the substitutions available in
+The variable `skeletor-global-substitutions` defines the substitutions available in
 all project templates, and each template may declare its own special
 substitutions.
 

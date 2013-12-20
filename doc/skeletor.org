@@ -37,11 +37,11 @@ make && make install
 #+end_src
 
 * Usage
-Use =M-x create-project= to create a new project based on an existing template.
+Use =M-x skeletor-create-project= to create a new project based on an existing template.
 You will be guided through any configuration needed.
 
 By default, new projects are created in =~/Projects=. Customise
-=skel-project-directory= to change this.
+=skeletor-project-directory= to change this.
 
 * Extending
 
@@ -61,7 +61,7 @@ Skeletor uses physical files and directories to represent project templates.
 When you create a project, Skeletor will copy the template directory and apply
 certain transformations.
 
-To create a template, make a new directory in =skel-user-directory=. It can
+To create a template, make a new directory in =skeletor-user-directory=. It can
 contain any files and directories you'd like.
 
 It is a good idea to add any files needed for distributing the project source.
@@ -86,7 +86,7 @@ Note that Skeletor will handle the creation of a license file itself, so you
 should not add one to your skeleton.
 
 *** Configuring the Skeleton
-Once you have created a project skeleton, use the =define-project-skeleton=
+Once you have created a project skeleton, use the =skeletor-define-template=
 macro to configure how the project template will be created.
 
 **** Basic Configuration
@@ -94,11 +94,11 @@ macro to configure how the project template will be created.
 In the simplest case, you just need to tell Skeletor the name of the template:
 
 #+begin_src elisp
-(define-project-skeleton "my-elisp-package")
+(skeletor-define-template "my-elisp-package")
 #+end_src
 
 This will add =my-elisp-package= to the list of available projects. You can now
-create an instance by calling =M-x create-project my-elisp-package=. Skeletor
+create an instance by calling =M-x skeletor-create-project my-elisp-package=. Skeletor
 will manage the creation of the project, prompt you to choose a license, and
 initialise a git repository at the root of the project.
 
@@ -108,11 +108,11 @@ You can set a custom title for your project type using the =:title= keyword
 argument.
 
 #+begin_src elisp
-(define-project-skeleton "my-elisp-package"
+(skeletor-define-template "my-elisp-package"
   :title "My Elisp Package")
 #+end_src
 
-The title is the string that represents the project in the =create-project=
+The title is the string that represents the project in the =skeletor-create-project=
 prompt.
 
 **** Default Licenses
@@ -124,7 +124,7 @@ Skeletor will prompt you to select a license when you create a project. Some
 For example, Elisp projects are generally licensed under GPL:
 
 #+begin_src elisp
-(define-project-skeleton "my-elisp-package"
+(skeletor-define-template "my-elisp-package"
   ; ...
   :default-license (rx bol "gpl"))
 #+end_src
@@ -142,11 +142,11 @@ For example, the Elisp project runs a Makefile task in the background to
 configure the development environment:
 
 #+begin_src elisp
-(define-project-skeleton "elisp-package"
+(skeletor-define-template "elisp-package"
   ; ...
   :after-creation
   (lambda (dir)
-    (skel-async-shell-command dir "make env")))
+    (skeletor-async-shell-command dir "make env")))
 #+end_src
 
 You can do anything you want in the =after-creation= command, but it is a good
@@ -157,16 +157,16 @@ project.
 **** External Tools
 
 Sometimes you need to use an external tool to perform part of the project
-configuration. Skeletor provides the =skel-shell-command= and
-=skel-async-shell-command= functions for this purpose. These functions output to
+configuration. Skeletor provides the =skeletor-shell-command= and
+=skeletor-async-shell-command= functions for this purpose. These functions output to
 special buffers and assert that their shell commands were successful.
 
 #+begin_src elisp
-(define-project-skeleton "elisp-package"
+(skeletor-define-template "elisp-package"
   ; ...
   :after-creation
   (lambda (dir)
-    (skel-async-shell-command dir "make env")))
+    (skeletor-async-shell-command dir "make env")))
 #+end_src
 
 Because such external tools may not be installed on every system, Skeletor
@@ -178,7 +178,7 @@ For example, the =elisp-package= template uses =make= and =Cask= to bootstrap
 the development environment and declares its dependency on these programs:
 
 #+begin_src elisp
-(define-project-skeleton "elisp-package"
+(skeletor-define-template "elisp-package"
   ; ...
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")
                           ("cask" . "https://github.com/cask/cask")))
@@ -232,7 +232,7 @@ Project: foo
 
 *** Specifying Substitutions
 
-The =skel-global-substitutions= variable defines the substitutions available to
+The =skeletor-global-substitutions= variable defines the substitutions available to
 all skeletons. It is an alist, where each element is a cons of =(STRING .
 REPLACEMENT)=. =REPLACEMENT= should be a string literal, a variable name, a
 function name, or a lambda expression.
@@ -240,20 +240,20 @@ function name, or a lambda expression.
 You can add your own items to =skel-globl-substitutions=. For example:
 
 #+begin_src elisp
-(add-to-list 'skel-global-substitutions
+(add-to-list 'skeletor-global-substitutions
              '("__ORGANISATION__" "Masters of the Universe"))
 
-(add-to-list 'skel-global-substitutions
+(add-to-list 'skeletor-global-substitutions
              (cons "__HOME__" (getenv "HOME")))
 
-(add-to-list 'skel-global-substitutions
+(add-to-list 'skeletor-global-substitutions
              (cons "__TIME__" (lambda () (format-time-string "%c"))))
 #+end_src
 
 You can also define substitutions available to individual skeletons:
 
 #+begin_src elisp
-(define-project-skeleton "my-package"
+(skeletor-define-template "my-package"
   :substitutions
   '(("__DESCRIPTION__" . (lambda () (read-string "Description: ")))))
 #+end_src
@@ -285,24 +285,24 @@ Some communities have well-established tools for creating projects from
 templates. Skeletor may still be used to orchestrate these tools and perform
 additional setup steps.
 
-Skeletor provides the =define-skeleton-constructor= macro for this purpose. It
-is similar to =define-project-skeleton=, but it requires you supply a function
+Skeletor provides the =skeletor-define-constructor= macro for this purpose. It
+is similar to =skeletor-define-template=, but it requires you supply a function
 that creates the project structure itself.
 
 For example, [[http://bundler.io][Bundler]] is a popular tool in the Ruby community that can create new
 Ruby projects. Skeletor provides the following binding:
 
 #+begin_src elisp
-(define-skeleton-constructor "Ruby Gem"
+(skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
   :no-license? t
   :initialise
   (lambda (name project-dir)
-    (skel-shell-command
+    (skeletor-shell-command
      project-dir (format "bundle gem %s" (shell-quote-argument name)))
     (when (and (executable-find "rspec")
                (y-or-n-p "Create RSpec test suite? "))
-      (skel-shell-command (f-join project-dir name) "rspec --init"))))
+      (skeletor-shell-command (f-join project-dir name) "rspec --init"))))
 #+end_src
 
 Skeletor will use =bundle= to create the project structure, offer to create an

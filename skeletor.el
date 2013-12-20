@@ -25,11 +25,11 @@
 
 ;; Provides project skeletons for Emacs.
 ;;
-;; To create a new project interactively, run 'M-x create-project'.
+;; To create a new project interactively, run 'M-x skeletor-create-project'.
 ;;
 ;; To define a new project, create a project template inside
-;; `skel-user-directory', then configure the template with the
-;; `define-project-skeleton' macro.
+;; `skeletor-user-directory', then configure the template with the
+;; `skeletor-define-template' macro.
 ;;
 ;; See the info manual for all the details.
 
@@ -50,23 +50,23 @@
 (defgroup skeletor nil
   "Provides customisable project skeletons for Emacs."
   :group 'tools
-  :prefix "skel-"
+  :prefix "skeletor-"
   :link '(custom-manual "(skeletor)Top")
   :link '(info-link "(skeletor)Usage"))
 
-(defcustom skel-user-directory (f-join user-emacs-directory "project-skeletons")
+(defcustom skeletor-user-directory (f-join user-emacs-directory "project-skeletons")
   "The directory containing project skeletons.
 Each directory inside is available for instantiation as a project
 skeleton."
   :group 'skeletor
   :type 'directory)
 
-(defcustom skel-project-directory (f-join (getenv "HOME") "Projects")
+(defcustom skeletor-project-directory (f-join (getenv "HOME") "Projects")
   "The directory where new projects will be created."
   :group 'skeletor
   :type 'directory)
 
-(defcustom skel-global-substitutions
+(defcustom skeletor-global-substitutions
   (list (cons "__YEAR__" (format-time-string "%Y"))
         (cons "__USER-NAME__" user-full-name)
         (cons "__USER-MAIL-ADDRESS__" user-mail-address)
@@ -83,19 +83,19 @@ evaluated or a function that will be called."
   :type '(alist :key-type 'string
                 :value-type (choice string variable function)))
 
-(defcustom skel-init-with-git (executable-find "git")
+(defcustom skeletor-init-with-git (executable-find "git")
   "When non-nil, initialise newly created projects with a git repository."
   :group 'skeletor
   :type 'boolean)
 
-(defcustom skel-show-project-command 'dired
+(defcustom skeletor-show-project-command 'dired
   "The command to use to show newly-created projects.
 Should be a function that accepts the path to the project as an
 argument."
   :group 'skeletor
   :type 'function)
 
-(defcustom skel-after-project-instantiated-hook nil
+(defcustom skeletor-after-project-instantiated-hook nil
   "Hook run after a project is successfully instantiated.
 Each function will be passed the path of the newly instantiated
 project."
@@ -105,9 +105,9 @@ project."
 (defgroup skeletor-python nil
   "Configuration for python projects in Skeletor."
   :group 'tools
-  :prefix "skel-python-")
+  :prefix "skeletor-python-")
 
-(defcustom skel-python-bin-search-path '("/usr/bin" "/usr/local/bin")
+(defcustom skeletor-python-bin-search-path '("/usr/bin" "/usr/local/bin")
   "A list of paths to search for python binaries.
 
 Python binaries found in these paths will be shown as canditates
@@ -117,7 +117,7 @@ when initialising virtualenv."
 
 ;;; -------------------------- Public Utilities --------------------------------
 
-(defun skel-shell-command (dir command &optional no-assert)
+(defun skeletor-shell-command (dir command &optional no-assert)
   "Run a shell command and return its exit status.
 
 * DIR is an unquoted path at which to run the command.
@@ -137,7 +137,7 @@ when initialising virtualenv."
                    "Skeleton creation failed--see the output buffer for details"))
       result)))
 
-(defun skel-async-shell-command (dir command)
+(defun skeletor-async-shell-command (dir command)
   "Run an async shell command.
 
 * DIR is an unquoted path at which to run the command.
@@ -153,7 +153,7 @@ when initialising virtualenv."
      buf
      (format "*Skeletor Errors [%s]*" (f-filename dir)))))
 
-(defun skel-require-executables (alist)
+(defun skeletor-require-executables (alist)
   "Check that executables can be located in the `exec-path'.
 Show a report with installation instructions if any cannot be
 found.
@@ -178,19 +178,19 @@ download instructions."
 
 ;;; ----------------------------- Internal -------------------------------------
 
-(defvar skel--pkg-root (f-dirname (or load-file-name (buffer-file-name)))
+(defvar skeletor--pkg-root (f-dirname (or load-file-name (buffer-file-name)))
   "The base directory of the Skeletor package.")
 
-(defvar skel--directory
-  (f-join skel--pkg-root "project-skeletons")
+(defvar skeletor--directory
+  (f-join skeletor--pkg-root "project-skeletons")
   "The directory containing built-in project skeletons.
 Each directory inside is available for instantiation as a project
 skeleton.")
 
-(defvar skel--project-types nil
+(defvar skeletor--project-types nil
   "A list of SkeletorProjectType that represents the available templates.")
 
-(defvar skel--licenses-directory (f-join skel--pkg-root "licenses")
+(defvar skeletor--licenses-directory (f-join skeletor--pkg-root "licenses")
   "The directory containing license files for projects.")
 
 (cl-defstruct (SkeletorTemplate
@@ -227,12 +227,12 @@ skeleton.")
   title constructor)
 
 ;; FilePath -> SkeletorTemplate
-(defun skel--dir->SkeletorTemplate (path)
+(defun skeletor--dir->SkeletorTemplate (path)
   "Construct a SkeletorTemplate from the filesystem entries at PATH."
   (SkeletorTemplate path (f-files path nil t) (f-directories path nil t)))
 
 ;; [(String,String)], FilePath -> SkeletorExpansionSpec
-(defun skel--expand-template-paths (substitutions dest template)
+(defun skeletor--expand-template-paths (substitutions dest template)
   "Expand all file and directory names in a template.
 Return a SkeletorExpansionSpec.
 
@@ -245,14 +245,14 @@ Return a SkeletorExpansionSpec.
   (cl-assert (listp substitutions))
   (cl-assert (SkeletorTemplate-p template))
   (cl-flet ((expand (it)
-                    (->> (skel--replace-all substitutions it)
+                    (->> (skeletor--replace-all substitutions it)
                       (s-chop-prefix (SkeletorTemplate-path template))
                       (s-prepend (s-chop-suffix (f-path-separator) dest)))))
     (SkeletorExpansionSpec
      (--map (cons it (expand it)) (SkeletorTemplate-files template))
      (--map (cons it (expand it)) (SkeletorTemplate-dirs template)))))
 
-(defun skel--evaluate-elisp-exprs-in-string (str)
+(defun skeletor--evaluate-elisp-exprs-in-string (str)
   "Evaluate any elisp expressions in string STR.
 An expression has the form \"__(expr)__\"."
   (with-temp-buffer
@@ -264,31 +264,31 @@ An expression has the form \"__(expr)__\"."
     (buffer-string)))
 
 ;; [(String,String)], String -> String
-(defun skel--replace-all (substitutions str)
+(defun skeletor--replace-all (substitutions str)
   "Expand SUBSTITUTIONS in STR with fixed case.
 Like `s-replace-all' but preserves case of the case of the
 substitution."
-  (let ((expanded (skel--evaluate-elisp-exprs-in-string str)))
+  (let ((expanded (skeletor--evaluate-elisp-exprs-in-string str)))
     (if substitutions
         (replace-regexp-in-string (regexp-opt (-map 'car substitutions))
                                   (lambda (it) (cdr (assoc it substitutions)))
                                   expanded 'fixcase)
       expanded)))
 
-(defun skel--validate-substitutions (alist)
+(defun skeletor--validate-substitutions (alist)
   "Assert that ALIST will be accepted by `s-replace-all'."
   (cl-assert (listp alist))
   (cl-assert (--all? (stringp (car it)) alist))
   (cl-assert (--all? (stringp (cdr it)) alist)))
 
 ;; [(String,String)], SkeletorExpansionSpec -> IO ()
-(defun skel--instantiate-spec (substitutions spec)
+(defun skeletor--instantiate-spec (substitutions spec)
   "Create an instance of the given template specification.
 
 * SUBSTITUTIONS is an alist as accepted by `s-replace-all'.
 
 * SPEC is a SkeletorExpansionSpec."
-  (skel--validate-substitutions substitutions)
+  (skeletor--validate-substitutions substitutions)
   (cl-assert (SkeletorExpansionSpec-p spec))
   (--each (-map 'cdr (SkeletorExpansionSpec-dirs spec))
     (make-directory it t))
@@ -296,11 +296,11 @@ substitution."
     (message "%s" it)
     (cl-destructuring-bind (src . dest) it
       (f-touch dest)
-      (f-write (skel--replace-all substitutions (f-read src))
+      (f-write (skeletor--replace-all substitutions (f-read src))
                'utf-8 dest))))
 
 ;; [(String,String)], FilePath, FilePath -> IO ()
-(defun skel--instantiate-skeleton-dir (substitutions src dest)
+(defun skeletor--instantiate-skeleton-dir (substitutions src dest)
   "Create an instance of a project skeleton.
 
 * SUBSTITUTIONS is an alist as accepted by `s-replace-all'.
@@ -308,42 +308,42 @@ substitution."
 * SRC is the path to the template directory.
 
 * DEST is the destination path for the template."
-  (skel--validate-substitutions substitutions)
+  (skeletor--validate-substitutions substitutions)
   (cl-assert (stringp src))
   (cl-assert (f-exists? src))
   (cl-assert (stringp dest))
   (make-directory dest t)
-  (->> (skel--dir->SkeletorTemplate src)
-    (skel--expand-template-paths substitutions dest)
-    (skel--instantiate-spec substitutions)))
+  (->> (skeletor--dir->SkeletorTemplate src)
+    (skeletor--expand-template-paths substitutions dest)
+    (skeletor--instantiate-spec substitutions)))
 
 ;; FilePath -> IO ()
-(defun skel--initialize-git-repo  (dir)
+(defun skeletor--initialize-git-repo  (dir)
   "Initialise a new git repository at DIR."
-  (when skel-init-with-git
+  (when skeletor-init-with-git
     (message "Initialising git...")
     ;; Some tools (e.g. bundler) initialise git but do not make an initial
     ;; commit.
     (unless (f-exists? (f-join dir ".git"))
-      (skel-shell-command dir "git init"))
-    (skel-shell-command
+      (skeletor-shell-command dir "git init"))
+    (skeletor-shell-command
      dir "git add -A && git commit -m 'Initial commit'")
     (message "Initialising git...done")))
 
 ;; FilePath, FilePath, [(String,String)] -> IO ()
-(defun skel--instantiate-license-file (license-file dest substitutions)
+(defun skeletor--instantiate-license-file (license-file dest substitutions)
   "Populate the given license file template.
 * LICENSE-FILE is the path to the template license file.
 
 * DEST is the path it will be copied to.
 
-* SUBSTITUTIONS is an alist passed to `skel--replace-all'."
-  (f-write (skel--replace-all substitutions (f-read license-file)) 'utf-8 dest))
+* SUBSTITUTIONS is an alist passed to `skeletor--replace-all'."
+  (f-write (skeletor--replace-all substitutions (f-read license-file)) 'utf-8 dest))
 
 ;;; ---------------------- User Interface Commands -----------------------------
 
 ;; (String,String) -> IO (String,String)
-(cl-defun skel--eval-substitution ((token . repl))
+(cl-defun skeletor--eval-substitution ((token . repl))
   "Convert a substitution item according to the following rules:
 
 * If the item is a lambda-function or function-name it will be called
@@ -361,29 +361,29 @@ substitution."
                      repl))))
 
 ;; String, Regex -> IO FilePath
-(defun skel--read-license (prompt default)
+(defun skeletor--read-license (prompt default)
   "Prompt the user to select a license.
 
 * PROMPT is the prompt shown to the user.
 
 * DEFAULT a regular expression used to find the default."
   (let* ((xs (--map (cons (s-upcase (f-filename it)) it)
-                    (f-files skel--licenses-directory)))
+                    (f-files skeletor--licenses-directory)))
          (d (unless (s-blank? default)
               (car (--first (s-matches? default (car it)) xs))))
          (choice (ido-completing-read prompt (-map 'car xs) nil t d)))
     (cdr (assoc choice xs))))
 
 ;; {String} -> IO String
-(cl-defun skel--read-project-name (&optional (prompt "Project Name: "))
+(cl-defun skeletor--read-project-name (&optional (prompt "Project Name: "))
   "Read a project name from the user."
   (let* ((name (read-string prompt))
-         (dest (f-join skel-project-directory name)))
+         (dest (f-join skeletor-project-directory name)))
     (cond
      ((s-blank? name)
-      (skel--read-project-name))
+      (skeletor--read-project-name))
      ((f-exists? dest)
-      (skel--read-project-name
+      (skeletor--read-project-name
        (format "%s already exists. Choose a different name: " dest)))
      (t
       name))))
@@ -391,7 +391,7 @@ substitution."
 ;;; Public user commands
 
 ;;;###autoload
-(cl-defmacro define-project-skeleton (name
+(cl-defmacro skeletor-define-template (name
                                       &key
                                       title
                                       substitutions
@@ -402,8 +402,8 @@ substitution."
   "Declare a new project type.
 
 * NAME is a string naming the project type. A corresponding
-  skeleton should exist in `skel--directory' or
-  `skel-user-directory'.
+  skeleton should exist in `skeletor--directory' or
+  `skeletor-user-directory'.
 
 * TITLE is the name to use when referring this project type in
   the UI.
@@ -423,12 +423,12 @@ substitution."
 
 * REQUIRES-EXECUTABLES is an alist of `(PROGRAM . URL)'
   expressing programs needed to expand this skeleton. See
-  `skel-require-executables'."
+  `skeletor-require-executables'."
   (declare (indent 1))
   (cl-assert (stringp name) t)
   (cl-assert (or (null title) (stringp title)) t)
   (cl-assert (stringp license-file-name) t)
-  (let ((constructor (intern (format "skel--create-%s" name)))
+  (let ((constructor (intern (format "skeletor--create-%s" name)))
         (default-license-var (intern (format "%s-default-license" name)))
         (rs (eval substitutions))
         (exec-alist (eval requires-executables)))
@@ -459,15 +459,15 @@ substitution."
 
          (interactive
           (progn
-            (skel-require-executables ',exec-alist)
-            (list (skel--read-project-name)
-                  (skel--read-license "License: " (eval ,default-license-var)))))
+            (skeletor-require-executables ',exec-alist)
+            (list (skeletor--read-project-name)
+                  (skeletor--read-license "License: " (eval ,default-license-var)))))
 
-         (let* ((dest (f-join skel-project-directory project-name))
+         (let* ((dest (f-join skeletor-project-directory project-name))
                 (default-directory dest)
-                (repls (-map 'skel--eval-substitution
+                (repls (-map 'skeletor--eval-substitution
                              (-concat
-                              skel-global-substitutions
+                              skeletor-global-substitutions
                               (list (cons "__PROJECT-NAME__" project-name)
                                     (cons "__LICENSE-FILE-NAME__" ,license-file-name))
                               ',rs))))
@@ -475,32 +475,32 @@ substitution."
            ;; Instantiate the project.
 
            (-if-let (skeleton (-first 'f-exists?
-                                      (list (f-expand ,name skel-user-directory)
-                                            (f-expand ,name skel--directory))))
+                                      (list (f-expand ,name skeletor-user-directory)
+                                            (f-expand ,name skeletor--directory))))
                (progn
-                 (unless (f-exists? skel-project-directory)
-                   (make-directory skel-project-directory t))
-                 (skel--instantiate-skeleton-dir repls skeleton dest)
-                 (skel--instantiate-license-file
+                 (unless (f-exists? skeletor-project-directory)
+                   (make-directory skeletor-project-directory t))
+                 (skeletor--instantiate-skeleton-dir repls skeleton dest)
+                 (skeletor--instantiate-license-file
                   license-file (f-join dest ,license-file-name) repls))
 
              (error "Skeleton %s not found" ,name))
 
            (save-window-excursion
              (funcall #',after-creation dest)
-             (skel--initialize-git-repo dest)
-             (run-hook-with-args 'skel-after-project-instantiated-hook default-directory))
+             (skeletor--initialize-git-repo dest)
+             (run-hook-with-args 'skeletor-after-project-instantiated-hook default-directory))
 
-           (when skel-show-project-command
-             (funcall skel-show-project-command dest))
+           (when skeletor-show-project-command
+             (funcall skeletor-show-project-command dest))
 
            (message "Project created at %s" dest)))
 
-       (add-to-list 'skel--project-types
+       (add-to-list 'skeletor--project-types
                     (SkeletorProjectType ,(or title name) ',constructor)))))
 
 ;;;###autoload
-(cl-defmacro define-skeleton-constructor (title
+(cl-defmacro skeletor-define-constructor (title
                                           &key
                                           initialise
                                           no-git?
@@ -515,17 +515,17 @@ This can be used to add bindings for command-line tools.
 
 * INITIALISE is a binary function that creates the project
   structure. It will be passed a name for the project, read from
-  the user, and the current value of `skel-project-directory'.
+  the user, and the current value of `skeletor-project-directory'.
 
   INITIALISE is expected to initialise the new project at
-  skel-project-directory/NAME. The command should signal an error
+  skeletor-project-directory/NAME. The command should signal an error
   if this fails for any reason.
 
   Make sure to switch to a shell buffer if INITIALISE is a shell
   command that requires user interaction.
 
 * When NO-GIT? is t, the project will not be initialised with a
-  git repo, regardless of the value of `skel-init-with-git'.
+  git repo, regardless of the value of `skeletor-init-with-git'.
 
 * When NO-LICENSE? is t, the project will not be initialised with
   a license file.
@@ -538,12 +538,12 @@ This can be used to add bindings for command-line tools.
 
 * REQUIRES-EXECUTABLES is an alist of `(PROGRAM . URL)'
   expressing programs needed to expand this skeleton. See
-  `skel-require-executables'."
+  `skeletor-require-executables'."
   (declare (indent 1))
   (cl-assert (stringp title) t)
   (cl-assert (stringp license-file-name) t)
   (cl-assert (functionp initialise) t)
-  (let ((constructor (intern (format "skel--create-%s" title)))
+  (let ((constructor (intern (format "skeletor--create-%s" title)))
         (default-license-var (intern (format "%s-default-license"
                                              (s-replace " " "-" title))))
         (exec-alist (eval requires-executables)))
@@ -572,57 +572,57 @@ This can be used to add bindings for command-line tools.
 
          (interactive
           (progn
-            (skel-require-executables ',exec-alist)
-            (list (skel--read-project-name)
+            (skeletor-require-executables ',exec-alist)
+            (list (skeletor--read-project-name)
                   (unless ,no-license?
-                    (skel--read-license "License: " (eval ,default-license-var))))))
+                    (skeletor--read-license "License: " (eval ,default-license-var))))))
 
-         (let* ((dest (f-join skel-project-directory project-name))
+         (let* ((dest (f-join skeletor-project-directory project-name))
                 (default-directory dest)
-                (repls (-map 'skel--eval-substitution
+                (repls (-map 'skeletor--eval-substitution
                              (-concat
-                              skel-global-substitutions
+                              skeletor-global-substitutions
                               (list (cons "__PROJECT-NAME__"
                                           project-name)
                                     (cons "__LICENSE-FILE-NAME__"
                                           ,license-file-name))))))
 
            (save-window-excursion
-             (unless (f-exists? skel-project-directory)
-               (make-directory skel-project-directory t))
-             (funcall #',initialise project-name skel-project-directory)
+             (unless (f-exists? skeletor-project-directory)
+               (make-directory skeletor-project-directory t))
+             (funcall #',initialise project-name skeletor-project-directory)
              (when license-file
-               (skel--instantiate-license-file
+               (skeletor--instantiate-license-file
                 license-file (f-join dest ,license-file-name) repls))
              (unless ,no-git?
-               (skel--initialize-git-repo dest))
-             (run-hook-with-args 'skel-after-project-instantiated-hook default-directory))
+               (skeletor--initialize-git-repo dest))
+             (run-hook-with-args 'skeletor-after-project-instantiated-hook default-directory))
 
-           (when skel-show-project-command
-             (funcall skel-show-project-command dest))
+           (when skeletor-show-project-command
+             (funcall skeletor-show-project-command dest))
 
            (message "Project created at %s" dest)))
 
-       (add-to-list 'skel--project-types (SkeletorProjectType ,title ',constructor)))))
+       (add-to-list 'skeletor--project-types (SkeletorProjectType ,title ',constructor)))))
 
 ;;;###autoload
-(defun create-project (title)
+(defun skeletor-create-project (title)
   "Interactively create a new project with Skeletor.
 TITLE is the name of an existing project skeleton."
   (interactive
    (list (completing-read "Skeleton: "
-                          (->> skel--project-types
+                          (->> skeletor--project-types
                             (-map 'SkeletorProjectType-title)
                             (-sort 'string<))
                           nil t)))
-  (->> skel--project-types
+  (->> skeletor--project-types
     (--first (equal title (SkeletorProjectType-title it)))
     SkeletorProjectType-constructor
     (call-interactively)))
 
 ;;; ------------------------ Built-in skeletons --------------------------------
 
-(define-project-skeleton "elisp-package"
+(skeletor-define-template "elisp-package"
   :title "Elisp Package"
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")
                           ("cask" . "https://github.com/cask/cask"))
@@ -633,18 +633,18 @@ TITLE is the name of an existing project skeleton."
          (read-string "Description: "))))
   :after-creation
   (lambda (dir)
-    (skel-async-shell-command dir "make env")))
+    (skeletor-async-shell-command dir "make env")))
 
-(defun skel-py--read-python-bin ()
+(defun skeletor-py--read-python-bin ()
   "Read a python binary from the user."
-  (->> skel-python-bin-search-path
+  (->> skeletor-python-bin-search-path
     (--mapcat
      (f-files it (lambda (f)
                    (s-matches? (rx "python" (* (any digit "." "-")) eol)
                                f))))
     (ido-completing-read "Python binary: ")))
 
-(defun skel-py--create-virtualenv-dirlocals (dir)
+(defun skeletor-py--create-virtualenv-dirlocals (dir)
   "Create a .dir-locals file in DIR for virtualenv variables."
   (save-excursion
     (add-dir-local-variable nil 'virtualenv-default-directory dir)
@@ -652,28 +652,28 @@ TITLE is the name of an existing project skeleton."
     (save-buffer)
     (kill-buffer)))
 
-(define-project-skeleton "python-library"
+(skeletor-define-template "python-library"
   :title "Python Library"
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")
                           ("virtualenv" . "http://www.virtualenv.org"))
-  :substitutions '(("__PYTHON-BIN__" . skel-py--read-python-bin))
+  :substitutions '(("__PYTHON-BIN__" . skeletor-py--read-python-bin))
   :after-creation
   (lambda (dir)
     (message "Finding python binaries...")
-    (skel-py--create-virtualenv-dirlocals dir)
-    (skel-async-shell-command dir "make tooling")))
+    (skeletor-py--create-virtualenv-dirlocals dir)
+    (skeletor-async-shell-command dir "make tooling")))
 
-(defvar skel-hs--haskell-categories
+(defvar skeletor-hs--haskell-categories
   (list "Codec" "Concurrency" "Control" "Data" "Database" "Development"
         "Distribution" "Game" "Graphics" "Language" "Math" "Network"
         "Sound" "System" "Testing" "Text" "Web")
   "List of Haskell project categories.")
 
-(defvar skel-hs--haskell-language-versions
+(defvar skeletor-hs--haskell-language-versions
   (list "Haskell2010" "Haskell98")
   "List of Haskell language versions.")
 
-(defun skel-hs--cabal-sandboxes-supported? ()
+(defun skeletor-hs--cabal-sandboxes-supported?? ()
   "Non-nil if the installed cabal version supports sandboxes.
 Sandboxes were introduced in cabal 1.18 ."
   (let ((vers (->> (shell-command-to-string "cabal --version")
@@ -684,7 +684,7 @@ Sandboxes were introduced in cabal 1.18 ."
     (cl-destructuring-bind (maj min &rest rest) vers
       (or (< 1 maj) (<= 18 min)))))
 
-(define-project-skeleton "haskell-executable"
+(skeletor-define-template "haskell-executable"
   :title "Haskell Executable"
   :requires-executables '(("cabal" . "http://www.haskell.org/cabal/"))
   :license-file-name "LICENSE"
@@ -694,37 +694,37 @@ Sandboxes were introduced in cabal 1.18 ."
          (read-string "Synopsis: ")))
     ("__HASKELL-LANGUAGE-VERSION__"
      . (lambda ()
-         (ido-completing-read "Language: " skel-hs--haskell-language-versions)))
+         (ido-completing-read "Language: " skeletor-hs--haskell-language-versions)))
     ("__PROJECT-CATEGORY__"
      . (lambda ()
-         (ido-completing-read "Category: " skel-hs--haskell-categories))))
+         (ido-completing-read "Category: " skeletor-hs--haskell-categories))))
   :after-creation
   (lambda (dir)
-    (when (skel-hs--cabal-sandboxes-supported?)
+    (when (skeletor-hs--cabal-sandboxes-supported??)
       (message "Initialising sandbox...")
-      (skel-async-shell-command dir "cabal sandbox init"))))
+      (skeletor-async-shell-command dir "cabal sandbox init"))))
 
-(define-skeleton-constructor "Ruby Gem"
+(skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
   :no-license? t
   :initialise
   (lambda (name project-dir)
-    (skel-shell-command
+    (skeletor-shell-command
      project-dir (format "bundle gem %s" (shell-quote-argument name)))
     (when (and (executable-find "rspec")
                (y-or-n-p "Create RSpec test suite? "))
-      (skel-shell-command (f-join project-dir name) "rspec --init"))))
+      (skeletor-shell-command (f-join project-dir name) "rspec --init"))))
 
-(defvar skel--clojure-project-types-cache nil
+(defvar skeletor-clj---project-types-cache nil
   "A list of strings representing the available Leiningen templates.")
 
-(defun skel--clojure-project-types ()
+(defun skeletor-clj--project-types ()
   "Parse the project templates known to Leiningen.
 Return a list of strings representing the available templates.
 
 This is a lengthy operation so the results are cached to
-`skel--clojure-project-types-cache'."
-  (or skel--clojure-project-types-cache
+`skeletor-clj--project-types-cache'."
+  (or skeletor-clj--project-types-cache
       (let ((types (->> (shell-command-to-string "lein help new")
                      (s-match
                       (rx bol "Subtasks available:\n" (group (+? anything)) "\n\n"))
@@ -733,16 +733,16 @@ This is a lengthy operation so the results are cached to
                      (--keep (cadr (s-match (rx bol (* space) (group (+ (not space))))
                                             it))))))
         (prog1 types
-          (setq skel--clojure-project-types-cache types)))))
+          (setq skeletor-clj--project-types-cache types)))))
 
-(define-skeleton-constructor "Clojure Project"
+(skeletor-define-constructor "Clojure Project"
   :requires-executables '(("lein" . "http://leiningen.org/"))
   :initialise
   (lambda (name project-dir)
     (message "Finding Leningien templates...")
     (let ((type (ido-completing-read
-                 "Template: " (skel--clojure-project-types) nil t "default")))
-      (skel-shell-command project-dir (format "lein new %s %s"
+                 "Template: " (skeletor-clj--project-types) nil t "default")))
+      (skeletor-shell-command project-dir (format "lein new %s %s"
                                               (shell-quote-argument type)
                                               (shell-quote-argument name))))))
 

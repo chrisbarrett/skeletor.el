@@ -414,6 +414,9 @@ replacement."
 * DEFAULT-LICENSE is a regexp matching the name of a license to
   be used as the default when reading from the user.
 
+* LICENSE-FILE-NAME is the filename to use for the generated
+  license file.
+
 * AFTER-CREATION is a unary function to be run once the project
   is created. It should take a single argument--the path to the
   newly-created project.

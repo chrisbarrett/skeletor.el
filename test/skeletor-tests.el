@@ -28,7 +28,7 @@
 
 (eval-and-compile
   ;; Add project root to flycheck checker load path to prevent spurious warnings.
-  (when (boundp' flycheck-emacs-lisp-load-path)
+  (when (boundp 'flycheck-emacs-lisp-load-path)
     (dolist (it (file-expand-wildcards "../.cask/*/elpa/*"))
       (add-to-list 'flycheck-emacs-lisp-load-path it))
     (add-to-list 'flycheck-emacs-lisp-load-path (expand-file-name "../"))))

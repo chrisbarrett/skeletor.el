@@ -24,10 +24,8 @@ repository. Follow the guidelines below to make sure everything goes smoothly.
 
 ### Naming
 
-Add a prefix for all internal names.
-
-Use a namespace prefix followed by two dashes for internal names, e.g.
-  `skeletor--internal-function`.
+- Use a `skeletor-` prefix for all public names.
+- Use a `skeletor--` prefix for all internal names.
 
 ### Docstrings
 

@@ -24,10 +24,8 @@ repository. Follow the guidelines below to make sure everything goes smoothly.
 
 ### Naming
 
-Add a prefix for all internal names.
-
-Use a namespace prefix followed by two dashes for internal names, e.g.
-  `__PROJECT-NAME__--internal-function`.
+- Use a `__PROJECT-NAME__-` prefix for all public names.
+- Use a `__PROJECT-NAME__--` prefix for all internal names.
 
 ### Docstrings
 

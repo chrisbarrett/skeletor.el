@@ -296,13 +296,17 @@ Ruby projects. Skeletor provides the following binding:
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
   :no-license? t
+
   :initialise
   (lambda (name project-dir)
     (skeletor-shell-command
-     project-dir (format "bundle gem %s" (shell-quote-argument name)))
+     project-dir (format "bundle gem %s" (shell-quote-argument name))))
+
+  :after-creation
+  (lambda (dir)
     (when (and (executable-find "rspec")
                (y-or-n-p "Create RSpec test suite? "))
-      (skeletor-shell-command (f-join project-dir name) "rspec --init"))))
+      (skeletor-shell-command dir "rspec --init"))))
 #+end_src
 
 Skeletor will use =bundle= to create the project structure, offer to create an

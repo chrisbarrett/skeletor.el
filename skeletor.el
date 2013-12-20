@@ -126,12 +126,12 @@ when initialising virtualenv."
 
 * An error will be raised on a non-zero result, unless NO-ASSERT
   is t."
-  (let ((buf (get-buffer-create (format "*Skeletor [%s]*" dir))))
+  (let ((buf (get-buffer-create (format "*Skeletor [%s]*" (f-filename dir)))))
     (with-current-buffer buf
       (erase-buffer))
     (let ((result (shell-command (format "cd %s && %s" (shell-quote-argument dir) command)
                                  buf
-                                 (format "*Skeleton Errors [%s]*" dir))))
+                                 (format "*Skeletor Errors [%s]*" (f-filename dir)))))
       (unless no-assert
         (cl-assert (zerop result) nil
                    "Skeleton creation failed--see the output buffer for details"))
@@ -145,13 +145,13 @@ when initialising virtualenv."
 * COMMAND is the shell command to execute."
   (let ((buf (get-buffer-create
               (generate-new-buffer-name
-               (format "*Skeletor [%s]*" dir)))))
+               (format "*Skeletor [%s]*" (f-filename dir))))))
     (with-current-buffer buf
       (erase-buffer))
     (async-shell-command
      (format "cd %s && %s" (shell-quote-argument dir) command)
      buf
-     (format "*Skeleton Errors [%s]*" dir))))
+     (format "*Skeletor Errors [%s]*" (f-filename dir)))))
 
 (defun skel-require-executables (alist)
   "Check that executables can be located in the `exec-path'.

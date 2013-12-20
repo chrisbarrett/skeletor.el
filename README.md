@@ -14,27 +14,38 @@ to easily create your own.
 
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#installation">1. Installation</a></li>
-<li><a href="#creating-projects">2. Creating Projects</a></li>
-<li><a href="#defining-project-templates">3. Defining Project Templates</a>
+<li><a href="#supported-project-types">1. Supported Project Types</a></li>
+<li><a href="#installation">2. Installation</a></li>
+<li><a href="#creating-projects">3. Creating Projects</a></li>
+<li><a href="#defining-project-templates">4. Defining Project Templates</a>
 <ul>
-<li><a href="#project-skeletons">3.1. Project Skeletons</a></li>
-<li><a href="#external-tools">3.2. External Tools</a></li>
+<li><a href="#project-skeletons">4.1. Project Skeletons</a></li>
+<li><a href="#external-tools">4.2. External Tools</a></li>
 </ul>
 </li>
-<li><a href="#variables-and-expansions-in-templates">4. Variables and Expansions in Templates</a>
+<li><a href="#variables-and-expansions-in-templates">5. Variables and Expansions in Templates</a>
 <ul>
-<li><a href="#token-expansion">4.1. Token Expansion</a></li>
-<li><a href="#embedded-elisp">4.2. Embedded Elisp</a></li>
+<li><a href="#token-expansion">5.1. Token Expansion</a></li>
+<li><a href="#embedded-elisp">5.2. Embedded Elisp</a></li>
 </ul>
 </li>
-<li><a href="#contributing">5. Contributing</a></li>
-<li><a href="#acknowledgements">6. Acknowledgements</a></li>
-<li><a href="#license">6. License</a></li>
+<li><a href="#contributing">6. Contributing</a></li>
+<li><a href="#acknowledgements">7. Acknowledgements</a></li>
+<li><a href="#license">7. License</a></li>
 </ul>
 </li>
 </ul>
 </div>
+
+## Supported Project Types
+
+Skeletor comes with predefined project types so it is useful out-of-the-box:
+
+- Clojure
+- Elisp
+- Haskell
+- Python
+- Ruby
 
 ## Installation
 

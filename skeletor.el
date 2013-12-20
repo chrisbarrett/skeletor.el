@@ -715,7 +715,7 @@ Sandboxes were introduced in cabal 1.18 ."
                (y-or-n-p "Create RSpec test suite? "))
       (skeletor-shell-command (f-join project-dir name) "rspec --init"))))
 
-(defvar skeletor-clj---project-types-cache nil
+(defvar skeletor-clj--project-types-cache nil
   "A list of strings representing the available Leiningen templates.")
 
 (defun skeletor-clj--project-types ()

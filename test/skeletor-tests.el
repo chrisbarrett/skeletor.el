@@ -59,11 +59,11 @@
       test-token (concat "MiXcAsE" (md5 (number-to-string (random))))
 
       test-substitutions `(("__PROJECT-NAME__" . ,template-name)
-                          ("__TOKEN__"        . ,test-token))
+                           ("__TOKEN__"        . ,test-token))
 
       spec-instance     (skeletor--expand-template-paths test-substitutions
-                                                     destination-path
-                                                     template-instance))
+                                                         destination-path
+                                                         template-instance))
 
 ;;; Utility functions
 
@@ -121,8 +121,8 @@ Elements are compared using `equal'."
     (should (equal expected (skeletor--replace-all substitutions token)))))
 
 (ert-deftest substitutions-are-idempotent-when-no-tokens-in-alist ()
-    (let ((input (symbol-name (cl-gensym))))
-      (should (equal input (skeletor--replace-all nil input)))))
+  (let ((input (symbol-name (cl-gensym))))
+    (should (equal input (skeletor--replace-all nil input)))))
 
 (ert-deftest evaluates-embedded-elisp-in-file-templates ()
   (let ((x (random 100))

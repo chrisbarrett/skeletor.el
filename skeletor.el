@@ -392,13 +392,13 @@ substitution."
 
 ;;;###autoload
 (cl-defmacro skeletor-define-template (name
-                                      &key
-                                      title
-                                      substitutions
-                                      (after-creation 'ignore)
-                                      default-license
-                                      (license-file-name "COPYING")
-                                      requires-executables)
+                                       &key
+                                       title
+                                       substitutions
+                                       (after-creation 'ignore)
+                                       default-license
+                                       (license-file-name "COPYING")
+                                       requires-executables)
   "Declare a new project type.
 
 * NAME is a string naming the project type. A corresponding
@@ -743,8 +743,8 @@ This is a lengthy operation so the results are cached to
     (let ((type (ido-completing-read
                  "Template: " (skeletor-clj--project-types) nil t "default")))
       (skeletor-shell-command project-dir (format "lein new %s %s"
-                                              (shell-quote-argument type)
-                                              (shell-quote-argument name))))))
+                                                  (shell-quote-argument type)
+                                                  (shell-quote-argument name))))))
 
 (provide 'skeletor)
 

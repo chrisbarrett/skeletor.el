@@ -10,30 +10,30 @@ to easily create your own.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. Supported Project Types</a></li>
-<li><a href="#sec-2">2. Installation</a></li>
-<li><a href="#sec-3">3. Usage</a></li>
-<li><a href="#sec-4">4. Extending</a>
+<li><a href="#supported-project-types">1. Supported Project Types</a></li>
+<li><a href="#installation">2. Installation</a></li>
+<li><a href="#usage">3. Usage</a></li>
+<li><a href="#extending">4. Extending</a>
 <ul>
-<li><a href="#sec-4-1">4.1. Project Skeletons</a>
+<li><a href="#project-skeletons">4.1. Project Skeletons</a>
 <ul>
-<li><a href="#sec-4-1-1">4.1.1. Creating a Skeleton Directory</a></li>
-<li><a href="#sec-4-1-2">4.1.2. Configuring the Skeleton</a></li>
+<li><a href="#creating-a-skeleton-directory">4.1.1. Creating a Skeleton Directory</a></li>
+<li><a href="#configuring-the-skeleton">4.1.2. Configuring the Skeleton</a></li>
 </ul>
 </li>
-<li><a href="#sec-4-2">4.2. Substitutions</a>
+<li><a href="#substitutions">4.2. Substitutions</a>
 <ul>
-<li><a href="#sec-4-2-1">4.2.1. Introduction</a></li>
-<li><a href="#sec-4-2-2">4.2.2. Specifying Substitutions</a></li>
-<li><a href="#sec-4-2-3">4.2.3. Embedded Elisp</a></li>
+<li><a href="#introduction">4.2.1. Introduction</a></li>
+<li><a href="#specifying-substitutions">4.2.2. Specifying Substitutions</a></li>
+<li><a href="#embedded-elisp">4.2.3. Embedded Elisp</a></li>
 </ul>
 </li>
-<li><a href="#sec-4-3">4.3. External Tools</a></li>
+<li><a href="#external-tools">4.3. External Tools</a></li>
 </ul>
 </li>
-<li><a href="#sec-5">5. Contributing</a></li>
-<li><a href="#sec-6">6. Acknowledgements</a></li>
-<li><a href="#sec-7">7. License</a></li>
+<li><a href="#contributing">5. Contributing</a></li>
+<li><a href="#acknowledgements">6. Acknowledgements</a></li>
+<li><a href="#license">7. License</a></li>
 </ul>
 </div>
 </div>

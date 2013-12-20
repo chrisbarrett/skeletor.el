@@ -66,18 +66,18 @@ skeleton."
   :group 'skeletor
   :type 'directory)
 
-(defcustom skel-global-replacements
+(defcustom skel-global-substitutions
   (list (cons "__YEAR__" (format-time-string "%Y"))
         (cons "__USER-NAME__" user-full-name)
         (cons "__USER-MAIL-ADDRESS__" user-mail-address)
         (cons "__ORGANISATION__" (if (boundp 'user-organisation)
                                      user-organisation
                                    user-full-name)))
-  "A list of replacements available for expansion in all project skeletons.
+  "A list of substitutions available for expansion in all project skeletons.
 
-Each alist element is comprised of (candidate . replacement),
-where 'candidate' will be substituted for 'replacement'.
-'replacement' may be a simple string, a variable that will be
+Each alist element is comprised of (candidate . substitution),
+where 'candidate' will be replaced with 'substitution'.
+'substitution' may be a string literal, a variable that will be
 evaluated or a function that will be called."
   :group 'skeletor
   :type '(alist :key-type 'string
@@ -209,10 +209,10 @@ skeleton.")
   "Represents a project template with expanded filenames.
 
 * DIRS is a list of conses, where the car is a path to a dir in
-  the template and the cdr is that dirname with all replacements performed.
+  the template and the cdr is that dirname with all substitutions performed.
 
 * FILES is a list of conses, where the car is a path to a file in
-  the template and the cdr is that filename with all replacements
+  the template and the cdr is that filename with all substitutions
   performed."
   files dirs)
 
@@ -232,20 +232,20 @@ skeleton.")
   (SkeletorTemplate path (f-files path nil t) (f-directories path nil t)))
 
 ;; [(String,String)], FilePath -> SkeletorExpansionSpec
-(defun skel--expand-template-paths (replacements dest template)
+(defun skel--expand-template-paths (substitutions dest template)
   "Expand all file and directory names in a template.
 Return a SkeletorExpansionSpec.
 
-* REPLACEMENTS is an alist as accepted by `s-replace-all'.
+* SUBSTITUTIONS is an alist as accepted by `s-replace-all'.
 
 * DEST is the destination path for the template.
 
 * TEMPLATE is a SkeletorTemplate."
   (cl-assert (stringp dest))
-  (cl-assert (listp replacements))
+  (cl-assert (listp substitutions))
   (cl-assert (SkeletorTemplate-p template))
   (cl-flet ((expand (it)
-                    (->> (skel--replace-all replacements it)
+                    (->> (skel--replace-all substitutions it)
                       (s-chop-prefix (SkeletorTemplate-path template))
                       (s-prepend (s-chop-suffix (f-path-separator) dest)))))
     (SkeletorExpansionSpec
@@ -264,31 +264,31 @@ An expression has the form \"__(expr)__\"."
     (buffer-string)))
 
 ;; [(String,String)], String -> String
-(defun skel--replace-all (replacements str)
-  "Expand REPLACEMENTS in STR with fixed case.
+(defun skel--replace-all (substitutions str)
+  "Expand SUBSTITUTIONS in STR with fixed case.
 Like `s-replace-all' but preserves case of the case of the
-replacement."
+substitution."
   (let ((expanded (skel--evaluate-elisp-exprs-in-string str)))
-    (if replacements
-        (replace-regexp-in-string (regexp-opt (-map 'car replacements))
-                                  (lambda (it) (cdr (assoc it replacements)))
+    (if substitutions
+        (replace-regexp-in-string (regexp-opt (-map 'car substitutions))
+                                  (lambda (it) (cdr (assoc it substitutions)))
                                   expanded 'fixcase)
       expanded)))
 
-(defun skel--validate-replacements (alist)
+(defun skel--validate-substitutions (alist)
   "Assert that ALIST will be accepted by `s-replace-all'."
   (cl-assert (listp alist))
   (cl-assert (--all? (stringp (car it)) alist))
   (cl-assert (--all? (stringp (cdr it)) alist)))
 
 ;; [(String,String)], SkeletorExpansionSpec -> IO ()
-(defun skel--instantiate-spec (replacements spec)
+(defun skel--instantiate-spec (substitutions spec)
   "Create an instance of the given template specification.
 
-* REPLACEMENTS is an alist as accepted by `s-replace-all'.
+* SUBSTITUTIONS is an alist as accepted by `s-replace-all'.
 
 * SPEC is a SkeletorExpansionSpec."
-  (skel--validate-replacements replacements)
+  (skel--validate-substitutions substitutions)
   (cl-assert (SkeletorExpansionSpec-p spec))
   (--each (-map 'cdr (SkeletorExpansionSpec-dirs spec))
     (make-directory it t))
@@ -296,26 +296,26 @@ replacement."
     (message "%s" it)
     (cl-destructuring-bind (src . dest) it
       (f-touch dest)
-      (f-write (skel--replace-all replacements (f-read src))
+      (f-write (skel--replace-all substitutions (f-read src))
                'utf-8 dest))))
 
 ;; [(String,String)], FilePath, FilePath -> IO ()
-(defun skel--instantiate-skeleton-dir (replacements src dest)
+(defun skel--instantiate-skeleton-dir (substitutions src dest)
   "Create an instance of a project skeleton.
 
-* REPLACEMENTS is an alist as accepted by `s-replace-all'.
+* SUBSTITUTIONS is an alist as accepted by `s-replace-all'.
 
 * SRC is the path to the template directory.
 
 * DEST is the destination path for the template."
-  (skel--validate-replacements replacements)
+  (skel--validate-substitutions substitutions)
   (cl-assert (stringp src))
   (cl-assert (f-exists? src))
   (cl-assert (stringp dest))
   (make-directory dest t)
   (->> (skel--dir->SkeletorTemplate src)
-    (skel--expand-template-paths replacements dest)
-    (skel--instantiate-spec replacements)))
+    (skel--expand-template-paths substitutions dest)
+    (skel--instantiate-spec substitutions)))
 
 ;; FilePath -> IO ()
 (defun skel--initialize-git-repo  (dir)
@@ -331,20 +331,20 @@ replacement."
     (message "Initialising git...done")))
 
 ;; FilePath, FilePath, [(String,String)] -> IO ()
-(defun skel--instantiate-license-file (license-file dest replacements)
+(defun skel--instantiate-license-file (license-file dest substitutions)
   "Populate the given license file template.
 * LICENSE-FILE is the path to the template license file.
 
 * DEST is the path it will be copied to.
 
-* REPLACEMENTS is an alist passed to `skel--replace-all'."
-  (f-write (skel--replace-all replacements (f-read license-file)) 'utf-8 dest))
+* SUBSTITUTIONS is an alist passed to `skel--replace-all'."
+  (f-write (skel--replace-all substitutions (f-read license-file)) 'utf-8 dest))
 
 ;;; ---------------------- User Interface Commands -----------------------------
 
 ;; (String,String) -> IO (String,String)
-(cl-defun skel--eval-replacement ((token . repl))
-  "Convert a replacement item according to the following rules:
+(cl-defun skel--eval-substitution ((token . repl))
+  "Convert a substitution item according to the following rules:
 
 * If the item is a lambda-function or function-name it will be called
 
@@ -394,7 +394,7 @@ replacement."
 (cl-defmacro define-project-skeleton (name
                                       &key
                                       title
-                                      replacements
+                                      substitutions
                                       (after-creation 'ignore)
                                       default-license
                                       (license-file-name "COPYING")
@@ -408,7 +408,7 @@ replacement."
 * TITLE is the name to use when referring this project type in
   the UI.
 
-* REPLACEMENTS is an alist of (string . replacement) used specify
+* SUBSTITUTIONS is an alist of (string . substitution) used specify
   substitutions when initialising the project from its skeleton.
 
 * DEFAULT-LICENSE is a regexp matching the name of a license to
@@ -430,7 +430,7 @@ replacement."
   (cl-assert (stringp license-file-name) t)
   (let ((constructor (intern (format "skel--create-%s" name)))
         (default-license-var (intern (format "%s-default-license" name)))
-        (rs (eval replacements))
+        (rs (eval substitutions))
         (exec-alist (eval requires-executables)))
 
     (cl-assert (listp requires-executables) t)
@@ -465,9 +465,9 @@ replacement."
 
          (let* ((dest (f-join skel-project-directory project-name))
                 (default-directory dest)
-                (repls (-map 'skel--eval-replacement
+                (repls (-map 'skel--eval-substitution
                              (-concat
-                              skel-global-replacements
+                              skel-global-substitutions
                               (list (cons "__PROJECT-NAME__" project-name)
                                     (cons "__LICENSE-FILE-NAME__" ,license-file-name))
                               ',rs))))
@@ -579,9 +579,9 @@ This can be used to add bindings for command-line tools.
 
          (let* ((dest (f-join skel-project-directory project-name))
                 (default-directory dest)
-                (repls (-map 'skel--eval-replacement
+                (repls (-map 'skel--eval-substitution
                              (-concat
-                              skel-global-replacements
+                              skel-global-substitutions
                               (list (cons "__PROJECT-NAME__"
                                           project-name)
                                     (cons "__LICENSE-FILE-NAME__"
@@ -627,7 +627,7 @@ TITLE is the name of an existing project skeleton."
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")
                           ("cask" . "https://github.com/cask/cask"))
   :default-license (rx bol "gpl")
-  :replacements
+  :substitutions
   '(("__DESCRIPTION__"
      . (lambda ()
          (read-string "Description: "))))
@@ -656,7 +656,7 @@ TITLE is the name of an existing project skeleton."
   :title "Python Library"
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")
                           ("virtualenv" . "http://www.virtualenv.org"))
-  :replacements '(("__PYTHON-BIN__" . skel-py--read-python-bin))
+  :substitutions '(("__PYTHON-BIN__" . skel-py--read-python-bin))
   :after-creation
   (lambda (dir)
     (message "Finding python binaries...")
@@ -688,7 +688,7 @@ Sandboxes were introduced in cabal 1.18 ."
   :title "Haskell Executable"
   :requires-executables '(("cabal" . "http://www.haskell.org/cabal/"))
   :license-file-name "LICENSE"
-  :replacements
+  :substitutions
   '(("__SYNOPSIS__"
      . (lambda ()
          (read-string "Synopsis: ")))

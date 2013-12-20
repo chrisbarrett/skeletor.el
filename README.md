@@ -25,7 +25,7 @@ to easily create your own.
 </li>
 <li><a href="#variables-and-expansions-in-templates">5. Variables and Expansions in Templates</a>
 <ul>
-<li><a href="#token-expansion">5.1. Token Expansion</a></li>
+<li><a href="#substitutions">5.1. Substitutions</a></li>
 <li><a href="#embedded-elisp">5.2. Embedded Elisp</a></li>
 </ul>
 </li>
@@ -107,7 +107,7 @@ configuration if necessary:
 ```lisp
 (define-project-skeleton "elisp-package"
   :default-license (rx bol "gpl")
-  :replacements '(("__DESCRIPTION__" . (lambda () (read-string "Description: "))))
+  :substitutions '(("__DESCRIPTION__" . (lambda () (read-string "Description: "))))
   :after-creation
   (lambda (dir)
     (skel-async-shell-command dir "make env")))
@@ -136,7 +136,7 @@ The example below uses `bundler` to create a Ruby project, then add RSpec tests.
 
 ## Variables and Expansions in Templates
 
-### Token Expansion
+### Substitutions
 
 File and directory names may contain special tokens that will be expanded when a
 project is created.
@@ -157,9 +157,9 @@ could be instantiated as the following:
     Project: Capture Battle-Cat
     Author: Skeletor
 
-The variable `skel-global-replacements` defines the replacements available in
+The variable `skel-global-substitutions` defines the substitutions available in
 all project templates, and each template may declare its own special
-replacements.
+substitutions.
 
 ### Embedded Elisp
 

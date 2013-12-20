@@ -47,7 +47,7 @@
 (defvar destination-path)
 (defvar template-instance)
 (defvar spec-instance)
-(defvar test-replacements)
+(defvar test-substitutions)
 (defvar test-token)
 
 ;; Regenerate random vars each test run.
@@ -58,10 +58,10 @@
 
       test-token (concat "MiXcAsE" (md5 (number-to-string (random))))
 
-      test-replacements `(("__PROJECT-NAME__" . ,template-name)
+      test-substitutions `(("__PROJECT-NAME__" . ,template-name)
                           ("__TOKEN__"        . ,test-token))
 
-      spec-instance     (skel--expand-template-paths test-replacements
+      spec-instance     (skel--expand-template-paths test-substitutions
                                                      destination-path
                                                      template-instance))
 
@@ -117,10 +117,10 @@ Elements are compared using `equal'."
 (ert-deftest expands-tokens-in-files-with-fixed-case ()
   (let* ((token "__REPL__")
          (expected "test TEST tEsT")
-         (replacements (list (cons token expected))))
-    (should (equal expected (skel--replace-all replacements token)))))
+         (substitutions (list (cons token expected))))
+    (should (equal expected (skel--replace-all substitutions token)))))
 
-(ert-deftest replacements-are-idempotent-when-no-tokens-in-alist ()
+(ert-deftest substitutions-are-idempotent-when-no-tokens-in-alist ()
     (let ((input (symbol-name (cl-gensym))))
       (should (equal input (skel--replace-all nil input)))))
 
@@ -131,7 +131,7 @@ Elements are compared using `equal'."
 
 ;;; Integration tests
 
-(skel--instantiate-skeleton-dir test-replacements template-path destination-path)
+(skel--instantiate-skeleton-dir test-substitutions template-path destination-path)
 
 (ert-deftest instantiates-all-files-in-template ()
   (should (equal (length (f-files template-path nil t))

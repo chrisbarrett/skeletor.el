@@ -428,6 +428,7 @@ substitution."
   (cl-assert (stringp name) t)
   (cl-assert (or (null title) (stringp title)) t)
   (cl-assert (stringp license-file-name) t)
+  (cl-assert (functionp after-creation) t)
   (let ((constructor (intern (format "skeletor--create-%s" name)))
         (default-license-var (intern (format "%s-default-license" name)))
         (rs (eval substitutions))
@@ -503,6 +504,7 @@ substitution."
 (cl-defmacro skeletor-define-constructor (title
                                           &key
                                           initialise
+                                          (after-creation 'ignore)
                                           no-git?
                                           no-license?
                                           default-license
@@ -524,6 +526,10 @@ This can be used to add bindings for command-line tools.
   Make sure to switch to a shell buffer if INITIALISE is a shell
   command that requires user interaction.
 
+* AFTER-CREATION is a unary function to be run once the project
+  is created. It should take a single argument--the path to the
+  newly-created project.
+
 * When NO-GIT? is t, the project will not be initialised with a
   git repo, regardless of the value of `skeletor-init-with-git'.
 
@@ -543,6 +549,7 @@ This can be used to add bindings for command-line tools.
   (cl-assert (stringp title) t)
   (cl-assert (stringp license-file-name) t)
   (cl-assert (functionp initialise) t)
+  (cl-assert (functionp after-creation) t)
   (let ((constructor (intern (format "skeletor--create-%s" title)))
         (default-license-var (intern (format "%s-default-license"
                                              (s-replace " " "-" title))))
@@ -591,6 +598,7 @@ This can be used to add bindings for command-line tools.
              (unless (f-exists? skeletor-project-directory)
                (make-directory skeletor-project-directory t))
              (funcall #',initialise project-name skeletor-project-directory)
+             (funcall #',after-creation dest)
              (when license-file
                (skeletor--instantiate-license-file
                 license-file (f-join dest ,license-file-name) repls))
@@ -710,10 +718,12 @@ Sandboxes were introduced in cabal 1.18 ."
   :initialise
   (lambda (name project-dir)
     (skeletor-shell-command
-     project-dir (format "bundle gem %s" (shell-quote-argument name)))
+     project-dir (format "bundle gem %s" (shell-quote-argument name))))
+  :after-creation
+  (lambda (dir)
     (when (and (executable-find "rspec")
                (y-or-n-p "Create RSpec test suite? "))
-      (skeletor-shell-command (f-join project-dir name) "rspec --init"))))
+      (skeletor-shell-command dir "rspec --init"))))
 
 (defvar skeletor-clj--project-types-cache nil
   "A list of strings representing the available Leiningen templates.")

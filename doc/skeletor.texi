@@ -207,7 +207,7 @@ initialise a git repository at the root of the project.
 Titles
 
 You can set a custom title for your project type using the @verb{~:title~} keyword
-argument.
+parameter.
 
 @lisp
 (skeletor-define-template "my-elisp-package"
@@ -238,9 +238,9 @@ don't have to specify the license name precisely.
 @item
 Custom Actions
 
-You can use the @verb{~:after-creation~} keyword argument to perform additional actions
-after a project has been created. It takes a single-argument function taking the
-path to the newly-created project.
+You can use the @verb{~:after-creation~} keyword parameter to perform additional
+actions after a project has been created. It takes a single-parameter function
+taking the path to the newly-created project.
 
 For example, the Elisp project runs a Makefile task in the background to
 configure the development environment:
@@ -276,7 +276,7 @@ special buffers and assert that their shell commands were successful.
 
 Because such external tools may not be installed on every system, Skeletor
 provides a way to declare these requirements up-front using the
-@verb{~:requires-executables~} keyword argument. It takes an alist of @verb{~(PROGRAM .
+@verb{~:requires-executables~} keyword parameter. It takes an alist of @verb{~(PROGRAM .
 URL)~}, where @verb{~URL~} is a link to a project page or download instructions.
 
 For example, the @verb{~elisp-package~} template uses @verb{~make~} and @verb{~Cask~} to bootstrap
@@ -414,13 +414,17 @@ Ruby projects. Skeletor provides the following binding:
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
   :no-license? t
+
   :initialise
   (lambda (name project-dir)
     (skeletor-shell-command
-     project-dir (format "bundle gem %s" (shell-quote-argument name)))
+     project-dir (format "bundle gem %s" (shell-quote-argument name))))
+
+  :after-creation
+  (lambda (dir)
     (when (and (executable-find "rspec")
 	       (y-or-n-p "Create RSpec test suite? "))
-      (skeletor-shell-command (f-join project-dir name) "rspec --init"))))
+      (skeletor-shell-command dir "rspec --init"))))
 @end lisp
 
 Skeletor will use @verb{~bundle~} to create the project structure, offer to create an

@@ -293,7 +293,6 @@ substitution."
   (--each (-map 'cdr (SkeletorExpansionSpec-dirs spec))
     (make-directory it t))
   (--each (SkeletorExpansionSpec-files spec)
-    (message "%s" it)
     (cl-destructuring-bind (src . dest) it
       (f-touch dest)
       (f-write (skeletor--replace-all substitutions (f-read src))

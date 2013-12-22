@@ -755,7 +755,7 @@ This is a lengthy operation so the results are cached to
   :requires-executables '(("lein" . "http://leiningen.org/"))
   :initialise
   (lambda (name project-dir)
-    (message "Finding Leningien templates...")
+    (message "Finding Leningen templates...")
     (let ((type (ido-completing-read
                  "Template: " (skeletor-clj--project-types) nil t "default")))
       (skeletor-shell-command project-dir (format "lein new %s %s"

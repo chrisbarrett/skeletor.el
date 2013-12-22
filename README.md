@@ -318,6 +318,13 @@ for guidelines.
 
 ## Acknowledgements ##
 
+Skeletor is based on [@magnars](https://twitter.com/magnars)' Project
+Archetypes--one of many cool features of his
+[.emacs.d](https://github.com/magnars/.emacs.d). This, and other goodies, are
+covered in
+[this chat session](http://sachachua.com/blog/2013/11/emacs-chat-magnar-sveen-emacs-rocks/)
+with Sacha Chua.
+
 Muchas gracias to [@magnars](https://twitter.com/magnars) and
 [@rejeep](https://twitter.com/rejeep) for their excellent libraries and tooling.
 You guys are stars!

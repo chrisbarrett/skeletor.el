@@ -603,6 +603,8 @@ This can be used to add bindings for command-line tools.
              (unless (f-exists? skeletor-project-directory)
                (make-directory skeletor-project-directory t))
              (funcall #',initialise project-name skeletor-project-directory)
+             (cl-assert (f-exists? dest) t
+                        "Initialisation function failed to create project at %s")
              (funcall #',after-creation dest)
              (when license-file
                (skeletor--instantiate-license-file

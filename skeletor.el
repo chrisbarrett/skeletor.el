@@ -226,7 +226,7 @@ skeleton.")
 * CONSTRUCTOR is a command to call to construct an instance of the skeleton."
   title constructor)
 
-;; FilePath -> SkeletorTemplate
+;; FilePath -> IO SkeletorTemplate
 (defun skeletor--dir->SkeletorTemplate (path)
   "Construct a SkeletorTemplate from the filesystem entries at PATH."
   (SkeletorTemplate path (f-files path nil t) (f-directories path nil t)))
@@ -333,6 +333,7 @@ substitution."
 ;; FilePath, FilePath, [(String,String)] -> IO ()
 (defun skeletor--instantiate-license-file (license-file dest substitutions)
   "Populate the given license file template.
+
 * LICENSE-FILE is the path to the template license file.
 
 * DEST is the path it will be copied to.
@@ -388,7 +389,7 @@ substitution."
      (t
       name))))
 
-;;; Public user commands
+;;; --------------------- Public Commands and Macros ---------------------------
 
 ;;;###autoload
 (cl-defmacro skeletor-define-template (name
@@ -405,14 +406,17 @@ substitution."
   skeleton should exist in `skeletor--directory' or
   `skeletor-user-directory'.
 
-* TITLE is the name to use when referring this project type in
+* TITLE is the name to use when referring to this project type in
   the UI.
 
-* SUBSTITUTIONS is an alist of (string . substitution) used specify
-  substitutions when initialising the project from its skeleton.
+* SUBSTITUTIONS is an alist of (string . substitution) specifying
+  substitutions to be used, in addition to the global
+  substitutions defined in `skeletor-global-substitutions'. These
+  are evaluated when creating an instance of the template.
 
 * DEFAULT-LICENSE is a regexp matching the name of a license to
-  be used as the default when reading from the user.
+  be used as the default. This default is used to pre-populate
+  the license prompt when creating an insance of the template.
 
 * LICENSE-FILE-NAME is the filename to use for the generated
   license file.
@@ -537,7 +541,8 @@ This can be used to add bindings for command-line tools.
   a license file.
 
 * DEFAULT-LICENSE is a regexp matching the name of a license to
-  be used as the default when reading from the user.
+  be used as the default. This default is used to pre-populate
+  the license prompt when creating an insance of the template.
 
 * LICENSE-FILE-NAME is the filename to use for the generated
   license file.

@@ -311,6 +311,13 @@ Ruby projects. Skeletor provides the following binding:
 
 Skeletor will use =bundle= to create the project structure, offer to create an
 RSpec test suite, then add everything to version control.
+* Acknowledgements
+Skeletor is based on [[https://twitter.com/magnars][@magnars]]' Project Archetypes--one of many cool features of
+his [[https://github.com/magnars/.emacs.d][.emacs.d]]. This, and other goodies, are covered in [[http://sachachua.com/blog/2013/11/emacs-chat-magnar-sveen-emacs-rocks/][this chat session]] with
+Sacha Chua.
+
+Muchas gracias to [[https://twitter.com/magnars][@magnars]] and [[https://twitter.com/rejeep][@rejeep]] for their excellent libraries and
+tooling. You guys are stars!
 
 * GNU Free Documentation License
 @@info:@include fdl-1.3.texi@@

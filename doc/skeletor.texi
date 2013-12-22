@@ -51,6 +51,7 @@ The Skeletor manual
 * Installation::                
 * Usage::                       
 * Extending::                   
+* Acknowledgements::            
 * GNU Free Documentation License::  
 
 @detailmenu
@@ -429,6 +430,15 @@ Ruby projects. Skeletor provides the following binding:
 
 Skeletor will use @verb{~bundle~} to create the project structure, offer to create an
 RSpec test suite, then add everything to version control.
+
+@node Acknowledgements
+@chapter Acknowledgements
+Skeletor is based on @uref{https://twitter.com/magnars,@@magnars}' Project Archetypes--one of many cool features of
+his @uref{https://github.com/magnars/.emacs.d,.emacs.d}. This, and other goodies, are covered in @uref{http://sachachua.com/blog/2013/11/emacs-chat-magnar-sveen-emacs-rocks/,this chat session} with
+Sacha Chua.
+
+Muchas gracias to @uref{https://twitter.com/magnars,@@magnars} and @uref{https://twitter.com/rejeep,@@rejeep} for their excellent libraries and
+tooling. You guys are stars!
 
 @node GNU Free Documentation License
 @chapter GNU Free Documentation License

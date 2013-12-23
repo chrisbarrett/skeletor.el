@@ -11,4 +11,5 @@ env :
 .PHONY: tooling
 tooling : env
 	$(PIP) install jedi
+	$(PIP) install epc
 	$(PIP) install pylint

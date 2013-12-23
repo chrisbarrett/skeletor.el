@@ -493,7 +493,7 @@ substitution."
            (save-window-excursion
              (funcall #',after-creation dest)
              (skeletor--initialize-git-repo dest)
-             (run-hook-with-args 'skeletor-after-project-instantiated-hook default-directory))
+             (run-hook-with-args 'skeletor-after-project-instantiated-hook dest))
 
            (when skeletor-show-project-command
              (funcall skeletor-show-project-command dest))
@@ -610,7 +610,7 @@ This can be used to add bindings for command-line tools.
                 license-file (f-join dest ,license-file-name) repls))
              (unless ,no-git?
                (skeletor--initialize-git-repo dest))
-             (run-hook-with-args 'skeletor-after-project-instantiated-hook default-directory))
+             (run-hook-with-args 'skeletor-after-project-instantiated-hook dest))
 
            (when skeletor-show-project-command
              (funcall skeletor-show-project-command dest))

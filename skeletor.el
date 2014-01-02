@@ -554,10 +554,11 @@ This can be used to add bindings for command-line tools.
   (cl-assert (stringp license-file-name) t)
   (cl-assert (functionp initialise) t)
   (cl-assert (functionp after-creation) t)
-  (let ((constructor (intern (format "skeletor--create-%s" title)))
-        (default-license-var (intern (format "%s-default-license"
-                                             (s-replace " " "-" title))))
-        (exec-alist (eval requires-executables)))
+  (let* ((project-symbol-name (s-replace " " "-" (s-downcase title)))
+         (constructor (intern (concat "skeletor--create-" project-symbol-name)))
+         (default-license-var (intern
+                               (concat project-symbol-name "-default-license")))
+         (exec-alist (eval requires-executables)))
     (cl-assert (listp requires-executables) t)
     (cl-assert (-all? 'stringp (-map 'car exec-alist)) t)
     (cl-assert (-all? 'stringp (-map 'cdr exec-alist)) t)

@@ -23,3 +23,6 @@ before_script:
 script:
   - make info
   - make check
+
+allow_failures:
+  - emacs-snapshot

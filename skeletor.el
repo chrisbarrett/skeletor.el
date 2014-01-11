@@ -4,7 +4,7 @@
 
 ;; Author: Chris Barrett <chris.d.barrett@me.com>
 ;; Package-Requires: ((s "1.7.0") (f "0.14.0") (dash "2.2.0") (cl-lib "0.3") (emacs "24.1"))
-;; Version: 1.0.1
+;; Version: 1.1
 
 ;; This file is not part of GNU Emacs.
 

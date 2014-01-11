@@ -46,6 +46,7 @@
 (require 'f)
 (require 'cl-lib)
 (autoload 'insert-button "button")
+(autoload 'comint-mode "comint")
 
 (defgroup skeletor nil
   "Provides customisable project skeletons for Emacs."
@@ -152,6 +153,26 @@ when initialising virtualenv."
      (format "cd %s && %s" (shell-quote-argument dir) command)
      buf
      (format "*Skeletor Errors [%s]*" (f-filename dir)))))
+
+(defmacro skeletor-with-shell-setup (cmd &rest body)
+  "Perform template setup using an interactive shell command CMD.
+
+Display the shell buffer for user input.
+
+Delete the buffer and execute BODY forms if the command was
+successful."
+  (declare (indent 1) (debug t))
+  `(let* ((bufname "*Skeletor Command*")
+          (proc (start-process-shell-command
+                 "skeletorcommand" bufname ,cmd)))
+     (switch-to-buffer bufname)
+     (comint-mode)
+     (set-process-sentinel
+      proc
+      (lambda (proc str)
+        (when (s-matches? "finished" str)
+          (kill-buffer (process-buffer proc))
+          ,@body)))))
 
 (defun skeletor-require-executables (alist)
   "Check that executables can be located in the `exec-path'.
@@ -490,10 +511,9 @@ substitution."
 
              (error "Skeleton %s not found" ,name))
 
-           (save-window-excursion
-             (funcall #',after-creation dest)
-             (skeletor--initialize-git-repo dest)
-             (run-hook-with-args 'skeletor-after-project-instantiated-hook dest))
+           (funcall #',after-creation dest)
+           (skeletor--initialize-git-repo dest)
+           (run-hook-with-args 'skeletor-after-project-instantiated-hook dest)
 
            (when skeletor-show-project-command
              (funcall skeletor-show-project-command dest))
@@ -599,19 +619,20 @@ This can be used to add bindings for command-line tools.
                                     (cons "__LICENSE-FILE-NAME__"
                                           ,license-file-name))))))
 
-           (save-window-excursion
-             (unless (f-exists? skeletor-project-directory)
-               (make-directory skeletor-project-directory t))
-             (funcall #',initialise project-name skeletor-project-directory)
-             (cl-assert (f-exists? dest) t
-                        "Initialisation function failed to create project at %s")
-             (funcall #',after-creation dest)
-             (when license-file
-               (skeletor--instantiate-license-file
-                license-file (f-join dest ,license-file-name) repls))
-             (unless ,no-git?
-               (skeletor--initialize-git-repo dest))
-             (run-hook-with-args 'skeletor-after-project-instantiated-hook dest))
+           (unless (f-exists? skeletor-project-directory)
+             (make-directory skeletor-project-directory t))
+           (funcall #',initialise project-name skeletor-project-directory)
+           (cl-assert (f-exists? dest) t
+                      "Initialisation function failed to create project at %s")
+
+           (funcall #',after-creation dest)
+           (when license-file
+             (skeletor--instantiate-license-file
+              license-file (f-join dest ,license-file-name) repls))
+           (unless ,no-git?
+             (skeletor--initialize-git-repo dest))
+           (run-hook-with-args 'skeletor-after-project-instantiated-hook dest)
+
 
            (when skeletor-show-project-command
              (funcall skeletor-show-project-command dest))

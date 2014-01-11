@@ -31,9 +31,11 @@ all : env compile info dist
 
 # Configure tooling and environment.
 .PHONY: env
-env : packages $(PRECOMMIT_HOOK)
+env : packages
 
 # Run tests before committing.
+.PHONY: hook
+hook : $(PRECOMMIT_HOOK)
 $(PRECOMMIT_HOOK) :
 	ln -s $(PRECOMMIT_SRC) $(PRECOMMIT_HOOK)
 	chmod +x $(PRECOMMIT_HOOK)

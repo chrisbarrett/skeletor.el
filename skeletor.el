@@ -103,6 +103,12 @@ project."
   :group 'skeletor
   :type 'hook)
 
+(defcustom skeletor-shell-setup-finished-hook nil
+  "Hook run after a project has been set up using `skeletor-with-shell-setup'.
+Each function should accept a single argument that is the project path."
+  :group 'skeletor
+  :type 'hook)
+
 (defgroup skeletor-python nil
   "Configuration for python projects in Skeletor."
   :group 'tools
@@ -154,32 +160,47 @@ when initialising virtualenv."
      buf
      (format "*Skeletor Errors [%s]*" (f-filename dir)))))
 
-(defmacro skeletor-with-shell-setup (dir cmd &rest body)
+(defvar skeletor--interactive-process nil
+  "The current interactive shell process.  See `skeletor-with-shell-setup'.")
+
+(defun skeletor-with-shell-setup (dir cmd callback)
   "Perform template setup using an interactive shell command.
+Display the shell buffer for user input.
 
 DIR will be used as the current directory.
 
 CMD is the shell command to call.
 
-Display the shell buffer for user input.
+If the command exits successfully,
 
-Delete the buffer and execute BODY forms if the command was
-successful."
-  (declare (indent 2) (debug t))
-  `(let* ((bufname "*Skeletor Command*")
-          (proc (start-process-shell-command
-                 "skeletorcmd" bufname
-                 (format "cd %s && %s" ,dir ,cmd))))
+- delete the shell buffer
 
-     (switch-to-buffer bufname)
-     (comint-mode)
-     (set-process-sentinel
-      proc
-      (lambda (proc str)
-        (when (s-matches? "finished" str)
-          (kill-buffer (process-buffer proc))
-          ,@body)))
-     nil))
+- execute CALLBACK
+
+- run `skeletor-shell-setup-finished-hook'.
+
+This is intended to be used in the 'after-setup' stage of a
+template declaration."
+  (declare (indent 2))
+  (let ((bufname "*Skeletor Interactive Setup*"))
+    (setq skeletor--interactive-process
+          (start-process-shell-command
+           "skeletorcmd" bufname
+           (format "cd %s && %s" dir cmd)))
+    (condition-case nil
+        (progn
+          (set-process-sentinel
+           skeletor--interactive-process
+           `(lambda (proc str)
+              (setq skeletor--interactive-process nil)
+              (when (s-matches? "finished" str)
+                (kill-buffer (process-buffer proc))
+                (funcall ,callback)
+                (run-hook-with-args 'skeletor-shell-setup-finished-hook ,dir))))
+          (switch-to-buffer bufname)
+          (comint-mode))
+      (error
+       (setq skeletor--interactive-process nil)))))
 
 (defun skeletor-require-executables (alist)
   "Check that executables can be located in the `exec-path'.
@@ -347,15 +368,14 @@ substitution."
 ;; FilePath -> IO ()
 (defun skeletor--initialize-git-repo  (dir)
   "Initialise a new git repository at DIR."
-  (when skeletor-init-with-git
-    (message "Initialising git...")
-    ;; Some tools (e.g. bundler) initialise git but do not make an initial
-    ;; commit.
-    (unless (f-exists? (f-join dir ".git"))
-      (skeletor-shell-command dir "git init"))
-    (skeletor-shell-command
-     dir "git add -A && git commit -m 'Initial commit'")
-    (message "Initialising git...done")))
+  (message "Initialising git...")
+  ;; Some tools (e.g. bundler) initialise git but do not make an initial
+  ;; commit.
+  (unless (f-exists? (f-join dir ".git"))
+    (skeletor-shell-command dir "git init"))
+  (skeletor-shell-command
+   dir "git add -A && git commit -m 'Initial commit'")
+  (message "Initialising git...done"))
 
 ;; FilePath, FilePath, [(String,String)] -> IO ()
 (defun skeletor--instantiate-license-file (license-file dest substitutions)
@@ -367,6 +387,26 @@ substitution."
 
 * SUBSTITUTIONS is an alist passed to `skeletor--replace-all'."
   (f-write (skeletor--replace-all substitutions (f-read license-file)) 'utf-8 dest))
+
+;; FilePath -> IO ()
+(defun skeletor--show-project (dest)
+  "Reveal the new project at DEST by calling `skeletor-show-project-command'."
+  (when skeletor-show-project-command
+    (if skeletor--interactive-process
+        (add-hook 'skeletor-shell-setup-finished-hook
+                  skeletor-show-project-command)
+      (funcall skeletor-show-project-command dest))))
+
+;; FilePath -> IO ()
+(defun skeletor--prepare-git (dest)
+  "Configure a git repo at DEST at an appropriate stage in the setup.
+If there is an interactive process, wait until that is finished.
+Otherwise immediately initialise git."
+  (when skeletor-init-with-git
+    (if skeletor--interactive-process
+        (add-hook 'skeletor-shell-setup-finished-hook
+                  'skeletor--initialize-git-repo)
+      (skeletor--initialize-git-repo dest))))
 
 ;;; ---------------------- User Interface Commands -----------------------------
 
@@ -519,12 +559,9 @@ substitution."
              (error "Skeleton %s not found" ,name))
 
            (funcall #',after-creation dest)
-           (skeletor--initialize-git-repo dest)
+           (skeletor--prepare-git dest)
            (run-hook-with-args 'skeletor-after-project-instantiated-hook dest)
-
-           (when skeletor-show-project-command
-             (funcall skeletor-show-project-command dest))
-
+           (skeletor--show-project dest)
            (message "Project created at %s" dest)))
 
        (add-to-list 'skeletor--project-types
@@ -637,13 +674,9 @@ This can be used to add bindings for command-line tools.
              (skeletor--instantiate-license-file
               license-file (f-join dest ,license-file-name) repls))
            (unless ,no-git?
-             (skeletor--initialize-git-repo dest))
+             (skeletor--prepare-git dest))
            (run-hook-with-args 'skeletor-after-project-instantiated-hook dest)
-
-
-           (when skeletor-show-project-command
-             (funcall skeletor-show-project-command dest))
-
+           (skeletor--show-project dest)
            (message "Project created at %s" dest)))
 
        (add-to-list 'skeletor--project-types (SkeletorProjectType ,title ',constructor)))))
@@ -724,9 +757,10 @@ Sandboxes were introduced in cabal 1.18 ."
   :after-creation
   (lambda (dir)
     (skeletor-with-shell-setup dir "cabal init"
-      (when (skeletor-hs--cabal-sandboxes-supported?)
-        (message "Initialising sandbox...")
-        (skeletor-async-shell-command dir "cabal sandbox init")))))
+      `(lambda ()
+         (when (skeletor-hs--cabal-sandboxes-supported?)
+           (message "Initialising sandbox...")
+           (skeletor-async-shell-command ,dir "cabal sandbox init"))))))
 
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))

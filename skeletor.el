@@ -699,17 +699,7 @@ TITLE is the name of an existing project skeleton."
     (skeletor-py--create-virtualenv-dirlocals dir)
     (skeletor-async-shell-command dir "make tooling")))
 
-(defvar skeletor-hs--haskell-categories
-  (list "Codec" "Concurrency" "Control" "Data" "Database" "Development"
-        "Distribution" "Game" "Graphics" "Language" "Math" "Network"
-        "Sound" "System" "Testing" "Text" "Web")
-  "List of Haskell project categories.")
-
-(defvar skeletor-hs--haskell-language-versions
-  (list "Haskell2010" "Haskell98")
-  "List of Haskell language versions.")
-
-(defun skeletor-hs--cabal-sandboxes-supported?? ()
+(defun skeletor-hs--cabal-sandboxes-supported? ()
   "Non-nil if the installed cabal version supports sandboxes.
 Sandboxes were introduced in cabal 1.18 ."
   (let ((vers (->> (shell-command-to-string "cabal --version")
@@ -720,25 +710,16 @@ Sandboxes were introduced in cabal 1.18 ."
     (cl-destructuring-bind (maj min &rest rest) vers
       (or (< 1 maj) (<= 18 min)))))
 
-(skeletor-define-template "haskell-executable"
-  :title "Haskell Executable"
+(skeletor-define-template "haskell-project"
+  :title "Haskell Project"
   :requires-executables '(("cabal" . "http://www.haskell.org/cabal/"))
   :license-file-name "LICENSE"
-  :substitutions
-  '(("__SYNOPSIS__"
-     . (lambda ()
-         (read-string "Synopsis: ")))
-    ("__HASKELL-LANGUAGE-VERSION__"
-     . (lambda ()
-         (ido-completing-read "Language: " skeletor-hs--haskell-language-versions)))
-    ("__PROJECT-CATEGORY__"
-     . (lambda ()
-         (ido-completing-read "Category: " skeletor-hs--haskell-categories))))
   :after-creation
   (lambda (dir)
-    (when (skeletor-hs--cabal-sandboxes-supported??)
-      (message "Initialising sandbox...")
-      (skeletor-async-shell-command dir "cabal sandbox init"))))
+    (skeletor-with-shell-setup "cabal init"
+      (when (skeletor-hs--cabal-sandboxes-supported?)
+        (message "Initialising sandbox...")
+        (skeletor-async-shell-command dir "cabal sandbox init")))))
 
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))

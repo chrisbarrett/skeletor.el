@@ -2,8 +2,6 @@
 
 ## Summary
 
-__SYNOPSIS__
-
 ## Contributing
 
 Yes, please do! See CONTRIBUTING for guidelines.

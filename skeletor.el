@@ -154,17 +154,23 @@ when initialising virtualenv."
      buf
      (format "*Skeletor Errors [%s]*" (f-filename dir)))))
 
-(defmacro skeletor-with-shell-setup (cmd &rest body)
-  "Perform template setup using an interactive shell command CMD.
+(defmacro skeletor-with-shell-setup (dir cmd &rest body)
+  "Perform template setup using an interactive shell command.
+
+DIR will be used as the current directory.
+
+CMD is the shell command to call.
 
 Display the shell buffer for user input.
 
 Delete the buffer and execute BODY forms if the command was
 successful."
-  (declare (indent 1) (debug t))
+  (declare (indent 2) (debug t))
   `(let* ((bufname "*Skeletor Command*")
           (proc (start-process-shell-command
-                 "skeletorcommand" bufname ,cmd)))
+                 "skeletorcmd" bufname
+                 (format "cd %s && %s" ,dir ,cmd))))
+
      (switch-to-buffer bufname)
      (comint-mode)
      (set-process-sentinel
@@ -172,7 +178,8 @@ successful."
       (lambda (proc str)
         (when (s-matches? "finished" str)
           (kill-buffer (process-buffer proc))
-          ,@body)))))
+          ,@body)))
+     nil))
 
 (defun skeletor-require-executables (alist)
   "Check that executables can be located in the `exec-path'.
@@ -716,7 +723,7 @@ Sandboxes were introduced in cabal 1.18 ."
   :license-file-name "LICENSE"
   :after-creation
   (lambda (dir)
-    (skeletor-with-shell-setup "cabal init"
+    (skeletor-with-shell-setup dir "cabal init"
       (when (skeletor-hs--cabal-sandboxes-supported?)
         (message "Initialising sandbox...")
         (skeletor-async-shell-command dir "cabal sandbox init")))))

@@ -4,7 +4,6 @@ SCRIPT       = $(CWD)/script
 GIT_DIR      = $(CWD)/.git
 EMACS       ?= emacs
 EMACSFLAGS   = --batch -Q
-PYTHON       = python
 CASK         = cask
 VERSION     := $(shell EMACS=$(EMACS) $(CASK) version)
 PKG_DIR     := $(shell EMACS=$(EMACS) $(CASK) package-directory)

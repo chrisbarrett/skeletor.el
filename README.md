@@ -329,6 +329,9 @@ Muchas gracias to [@magnars](https://twitter.com/magnars) and
 [@rejeep](https://twitter.com/rejeep) for their excellent libraries and tooling.
 You guys are stars!
 
+- [Yasuyuki Oka](https://github.com/yasuyk) added support for customising the
+  completing-read function.
+
 ## License ##
 
 See [COPYING](https://github.com/chrisbarrett/skeletor.el/blob/master/COPYING).

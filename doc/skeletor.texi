@@ -440,6 +440,12 @@ Sacha Chua.
 Muchas gracias to @uref{https://twitter.com/magnars,@@magnars} and @uref{https://twitter.com/rejeep,@@rejeep} for their excellent libraries and
 tooling. You guys are stars!
 
+@itemize
+@item 
+@uref{https://github.com/yasuyk,Yasuyuki Oka} added support for customising the completing-read function.
+
+@end itemize
+
 @node GNU Free Documentation License
 @chapter GNU Free Documentation License
 

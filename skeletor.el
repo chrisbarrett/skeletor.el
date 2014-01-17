@@ -96,6 +96,12 @@ argument."
   :group 'skeletor
   :type 'function)
 
+(defcustom skeletor-completing-read-function 'ido-completing-read
+  "Function to be called when requesting input from the user."
+  :group 'skeletor
+  :type '(radio (function-item completing-read)
+                (function :tag "Other")))
+
 (defcustom skeletor-after-project-instantiated-hook nil
   "Hook run after a project is successfully instantiated.
 Each function will be passed the path of the newly instantiated
@@ -439,7 +445,8 @@ Otherwise immediately initialise git."
                     (f-files skeletor--licenses-directory)))
          (d (unless (s-blank? default)
               (car (--first (s-matches? default (car it)) xs))))
-         (choice (ido-completing-read prompt (-map 'car xs) nil t d)))
+         (choice (funcall skeletor-completing-read-function
+                          prompt (-map 'car xs) nil t d)))
     (cdr (assoc choice xs))))
 
 ;; {String} -> IO String
@@ -718,7 +725,7 @@ TITLE is the name of an existing project skeleton."
      (f-files it (lambda (f)
                    (s-matches? (rx "python" (* (any digit "." "-")) eol)
                                f))))
-    (ido-completing-read "Python binary: ")))
+    (funcall skeletor-completing-read-function "Python binary: ")))
 
 (defun skeletor-py--create-virtualenv-dirlocals (dir)
   "Create a .dir-locals file in DIR for virtualenv variables."
@@ -800,7 +807,7 @@ This is a lengthy operation so the results are cached to
   :initialise
   (lambda (name project-dir)
     (message "Finding Leningen templates...")
-    (let ((type (ido-completing-read
+    (let ((type (funcall skeletor-completing-read-function
                  "Template: " (skeletor-clj--project-types) nil t "default")))
       (skeletor-shell-command project-dir (format "lein new %s %s"
                                                   (shell-quote-argument type)

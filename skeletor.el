@@ -824,6 +824,3 @@ This is a lengthy operation so the results are cached to
 (provide 'skeletor)
 
 ;;; skeletor.el ends here
-
-;;  LocalWords:  SkeletorTemplate SkeletorDirectory SkeletorExpansionSpec STR
-;;  LocalWords:  DEST skeletor

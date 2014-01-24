@@ -534,23 +534,17 @@ Otherwise immediately initialise git."
        ;; Update the variable if the definition is re-evaluated.
        (setq ,default-license-var ,default-license)
 
-       (defun ,constructor (project-name license-file)
-
+       (defun ,constructor ()
+         ;; Docstring
          ,(concat
            "Auto-generated function.\n\n"
-           "Interactively creates a new " name " skeleton.\n"
-           "
-* PROJECT-NAME is the name of this project instance.
-
-* LICENSE-FILE is the path to a license file to be added to the project.")
-
-         (interactive
-          (progn
-            (skeletor-require-executables ',exec-alist)
-            (list (skeletor--read-project-name)
-                  (skeletor--read-license "License: " (eval ,default-license-var)))))
-
-         (let* ((dest (f-join skeletor-project-directory project-name))
+           "Interactively creates a new " name " skeleton.")
+         ;; Body
+         (skeletor-require-executables ',exec-alist)
+         (let* ((project-name (skeletor--read-project-name))
+                (license-file
+                 (skeletor--read-license "License: " (eval ,default-license-var)))
+                (dest (f-join skeletor-project-directory project-name))
                 (default-directory dest)
                 (repls (-map 'skeletor--eval-substitution
                              (-concat
@@ -651,24 +645,17 @@ This can be used to add bindings for command-line tools.
        (setq ,default-license-var ,default-license)
 
 
-       (defun ,constructor (project-name license-file)
-
-         ,(concat
-           "Auto-generated function.\n\n"
-           "Interactively creates a new " title " skeleton.\n"
-           "
-* PROJECT-NAME is the name of this project instance.
-
-* LICENSE-FILE is the path to a license file to be added to the project.")
-
-         (interactive
-          (progn
-            (skeletor-require-executables ',exec-alist)
-            (list (skeletor--read-project-name)
-                  (unless ,no-license?
-                    (skeletor--read-license "License: " (eval ,default-license-var))))))
-
-         (let* ((dest (f-join skeletor-project-directory project-name))
+       (defun ,constructor ()
+         ;; Docstring
+         ,(concat "Auto-generated function.\n\n"
+                  "Creates a new " title " skeleton.")
+         ;; Body
+         (skeletor-require-executables ',exec-alist)
+         (let* ((project-name (skeletor--read-project-name))
+                (license-file
+                 (unless ,no-license?
+                   (skeletor--read-license "License: " (eval ,default-license-var))))
+                (dest (f-join skeletor-project-directory project-name))
                 (default-directory dest)
                 (repls (-map 'skeletor--eval-substitution
                              (-concat
@@ -706,10 +693,10 @@ TITLE is the name of an existing project skeleton."
                             (-map 'SkeletorProjectType-title)
                             (-sort 'string<))
                           nil t)))
-  (->> skeletor--project-types
-    (--first (equal title (SkeletorProjectType-title it)))
-    SkeletorProjectType-constructor
-    (call-interactively)))
+
+  (funcall (->> skeletor--project-types
+             (--first (equal title (SkeletorProjectType-title it)))
+             SkeletorProjectType-constructor)))
 
 ;;; ------------------------ Built-in skeletons --------------------------------
 

@@ -380,7 +380,9 @@ substitution."
   (unless (f-exists? (f-join dir ".git"))
     (skeletor-shell-command dir "git init"))
   (skeletor-shell-command
-   dir "git add -A && git commit -m 'Initial commit'")
+   dir "git commit --allow-empty -m 'Initial commit'")
+  (skeletor-shell-command
+   dir "git add -A && git commit -m 'Add initial files'")
   (message "Initialising git...done"))
 
 ;; FilePath, FilePath, [(String,String)] -> IO ()

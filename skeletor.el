@@ -62,6 +62,12 @@ skeleton."
   :group 'skeletor
   :type 'directory)
 
+(defcustom skeletor-user-organisation nil
+  "Used in template expansions to set the user organisation."
+  :group 'skeletor
+  :type '(choice (const :tag "None" nil)
+                 (string :tag "Value")))
+
 (defcustom skeletor-project-directory (f-join (getenv "HOME") "Projects")
   "The directory where new projects will be created."
   :group 'skeletor
@@ -71,9 +77,9 @@ skeleton."
   (list (cons "__YEAR__" (format-time-string "%Y"))
         (cons "__USER-NAME__" user-full-name)
         (cons "__USER-MAIL-ADDRESS__" user-mail-address)
-        (cons "__ORGANISATION__" (if (boundp 'user-organisation)
-                                     user-organisation
-                                   user-full-name)))
+        (cons "__ORGANISATION__" (lambda ()
+                                   (or skeletor-user-organisation
+                                       user-full-name))))
   "A list of substitutions available for expansion in all project skeletons.
 
 Each alist element is comprised of (candidate . substitution),

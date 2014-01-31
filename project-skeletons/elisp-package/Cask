@@ -7,4 +7,5 @@
  (depends-on "org-plus-contrib")
  (depends-on "ert")
  (depends-on "cl-lib")
+ (depends-on "flycheck")
  )

@@ -110,5 +110,5 @@ __PROJECT-NAME__-pkg.el : Cask
 
 %.elc : %.el $(PKG_DIR)
 	$(CASK) exec $(EMACS) $(EMACSFLAGS) \
-	--eval '(setq package-user-dir "$(PKG_DIR)")' -f package-initialize \
+	--eval '(setq package-user-dir "$(PKG_DIR)")' -f package-initialize -L .\
 	-f batch-byte-compile $<

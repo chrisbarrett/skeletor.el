@@ -330,7 +330,9 @@ Muchas gracias to [@magnars](https://twitter.com/magnars) and
 You guys are stars!
 
 - [Yasuyuki Oka](https://github.com/yasuyk) added support for customising the
-  completing-read function.
+  completing-read function
+- [Damien Cassou](http://damiencassou.seasidehosting.st) contributed feedback
+  and fixes to the Elisp template
 
 ## License ##
 

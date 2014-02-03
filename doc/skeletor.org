@@ -319,7 +319,8 @@ Sacha Chua.
 Muchas gracias to [[https://twitter.com/magnars][@magnars]] and [[https://twitter.com/rejeep][@rejeep]] for their excellent libraries and
 tooling. You guys are stars!
 
-- [[https://github.com/yasuyk][Yasuyuki Oka]] added support for customising the completing-read function.
+- [[https://github.com/yasuyk][Yasuyuki Oka]] added support for customising the completing-read function
+- [[http://damiencassou.seasidehosting.st][Damien Cassou]] contributed feedback and fixes to the Elisp template
 
 * GNU Free Documentation License
 @@info:@include fdl-1.3.texi@@

@@ -442,7 +442,10 @@ tooling. You guys are stars!
 
 @itemize
 @item 
-@uref{https://github.com/yasuyk,Yasuyuki Oka} added support for customising the completing-read function.
+@uref{https://github.com/yasuyk,Yasuyuki Oka} added support for customising the completing-read function
+
+@item 
+@uref{http://damiencassou.seasidehosting.st,Damien Cassou} contributed feedback and fixes to the Elisp template
 
 @end itemize
 

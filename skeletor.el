@@ -479,6 +479,7 @@ Otherwise immediately initialise git."
                                        title
                                        substitutions
                                        (after-creation 'ignore)
+                                       no-license?
                                        default-license
                                        (license-file-name "COPYING")
                                        requires-executables)
@@ -495,6 +496,9 @@ Otherwise immediately initialise git."
   substitutions to be used, in addition to the global
   substitutions defined in `skeletor-global-substitutions'. These
   are evaluated when creating an instance of the template.
+
+* When NO-LICENSE? is t, the project will not be initialised with
+  a license file.
 
 * DEFAULT-LICENSE is a regexp matching the name of a license to
   be used as the default. This default is used to pre-populate
@@ -543,7 +547,8 @@ Otherwise immediately initialise git."
          (skeletor-require-executables ',exec-alist)
          (let* ((project-name (skeletor--read-project-name))
                 (license-file
-                 (skeletor--read-license "License: " (eval ,default-license-var)))
+                 (unless ,no-license?
+                   (skeletor--read-license "License: " (eval ,default-license-var))))
                 (dest (f-join skeletor-project-directory project-name))
                 (default-directory dest)
                 (repls (-map 'skeletor--eval-substitution
@@ -562,8 +567,10 @@ Otherwise immediately initialise git."
                  (unless (f-exists? skeletor-project-directory)
                    (make-directory skeletor-project-directory t))
                  (skeletor--instantiate-skeleton-dir repls skeleton dest)
-                 (skeletor--instantiate-license-file
-                  license-file (f-join dest ,license-file-name) repls))
+
+                 (when license-file
+                   (skeletor--instantiate-license-file
+                    license-file (f-join dest ,license-file-name) repls)))
 
              (error "Skeleton %s not found" ,name))
 
@@ -755,7 +762,7 @@ Sandboxes were introduced in cabal 1.18 ."
 (skeletor-define-template "haskell-project"
   :title "Haskell Project"
   :requires-executables '(("cabal" . "http://www.haskell.org/cabal/"))
-  :license-file-name "LICENSE"
+  :no-license? t
   :after-creation
   (lambda (dir)
     (skeletor-with-shell-setup dir "cabal init"

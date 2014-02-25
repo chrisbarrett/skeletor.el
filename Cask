@@ -4,6 +4,7 @@
 (package-file "skeletor.el")
 
 (development
- (depends-on "cl-lib")
  (depends-on "ert")
+ (depends-on "flycheck")
+ (depends-on "flycheck-cask")
  (depends-on "org-plus-contrib"))

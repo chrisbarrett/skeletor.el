@@ -35,12 +35,6 @@
 
 ;;; Code:
 
-(eval-and-compile
-  ;; Add cask packages to load path so flycheck checkers work.
-  (when (boundp 'flycheck-emacs-lisp-load-path)
-    (dolist (it (file-expand-wildcards "./.cask/*/elpa/*"))
-      (add-to-list 'flycheck-emacs-lisp-load-path it))))
-
 (require 'dash)
 (require 's)
 (require 'f)

@@ -94,7 +94,7 @@ uninstall :
 
 # Reinstall the package.
 .PHONY: reinstall
-reinstall : clean uninstall reinstall
+reinstall : clean uninstall install
 
 # Restore to pristine state.
 .PHONY: clean-all

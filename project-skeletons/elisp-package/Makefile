@@ -86,6 +86,10 @@ install : dist
 uninstall :
 	rm -rf $(USER_ELPA_D)/__PROJECT-NAME__-*
 
+# Reinstall the package.
+.PHONY: reinstall
+reinstall : clean uninstall reinstall
+
 # Restore to pristine state.
 .PHONY: clean-all
 clean-all : clean clean-pkgdir

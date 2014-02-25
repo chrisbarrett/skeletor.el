@@ -92,6 +92,10 @@ install : dist
 uninstall :
 	rm -rf $(USER_ELPA_D)/skeletor-*
 
+# Reinstall the package.
+.PHONY: reinstall
+reinstall : clean uninstall reinstall
+
 # Restore to pristine state.
 .PHONY: clean-all
 clean-all : clean clean-pkgdir

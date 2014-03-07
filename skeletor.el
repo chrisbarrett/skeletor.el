@@ -753,6 +753,36 @@ Sandboxes were introduced in cabal 1.18 ."
     (cl-destructuring-bind (maj min &rest rest) vers
       (or (< 1 maj) (<= 18 min)))))
 
+(defun skeletor-hs--post-process-cabal-file (file)
+  "Adjust fields in the cabal file.  FILE is the cabal file path."
+  (with-current-buffer (find-file-noselect file)
+    (goto-char (point-min))
+    ;; Set src dir.
+    (save-excursion
+      (when (search-forward-regexp (rx (* space)
+                                       (group-n 1 "--" (* space))
+                                       "hs-source-dirs:" (* space) eol)
+                                   nil t)
+        (replace-match "" nil nil nil 1)
+        (goto-char (line-end-position))
+        (indent-to 23)
+        (insert "src")))
+
+    ;; Set main file.
+    (save-excursion
+      (when (search-forward-regexp (rx (* space)
+                                       (group-n 1 "--" (* space))
+                                       "main-is:" (* space) eol)
+                                   nil t)
+        (replace-match "" nil nil nil 1)
+        (goto-char (line-end-position))
+        (indent-to 23)
+        (insert "Main.hs")))
+
+    (save-buffer)
+    (kill-buffer)))
+
+
 (skeletor-define-template "haskell-project"
   :title "Haskell Project"
   :requires-executables '(("cabal" . "http://www.haskell.org/cabal/"))
@@ -763,7 +793,10 @@ Sandboxes were introduced in cabal 1.18 ."
       `(lambda ()
          (when (skeletor-hs--cabal-sandboxes-supported?)
            (message "Initialising sandbox...")
-           (skeletor-async-shell-command ,dir "cabal sandbox init"))))))
+           (skeletor-async-shell-command ,dir "cabal sandbox init"))
+
+         (let ((cabal-file (car (f-entries ,dir (lambda (f) (equal "cabal" (f-ext f)))))))
+           (skeletor-hs--post-process-cabal-file cabal-file))))))
 
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
@@ -804,7 +837,7 @@ This is a lengthy operation so the results are cached to
   (lambda (name project-dir)
     (message "Finding Leningen templates...")
     (let ((type (funcall skeletor-completing-read-function
-                 "Template: " (skeletor-clj--project-types) nil t "default")))
+                         "Template: " (skeletor-clj--project-types) nil t "default")))
       (skeletor-shell-command project-dir (format "lein new %s %s"
                                                   (shell-quote-argument type)
                                                   (shell-quote-argument name))))))

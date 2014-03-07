@@ -782,6 +782,44 @@ Sandboxes were introduced in cabal 1.18 ."
     (save-buffer)
     (kill-buffer)))
 
+(defvar skeletor-hs--main-file-content
+  "module Main where
+
+main :: IO ()
+main = undefined
+"
+  "The contents to insert when creating a Haskell main file.")
+
+(defvar skeletor-hs--library-file-content-format
+  "module %s where
+"
+  "Format string used to generate the contents of a new haskell library file.
+The format string should have one `%s' specfier, which is
+replaced with the module name.")
+
+(defun skeletor-hs--init-src-file (cabal-file src-dir)
+  "Create either a Main.hs file or a toplevel library file.
+
+CABAL-FILE is the path to the project's cabal file.
+
+SRC-DIR is the path to the project src directory."
+  (let* ((executable? (s-contains? "main-is:" (f-read-text cabal-file)))
+         (module-name
+          (if executable?
+              "Main"
+            (->> (f-base (f-parent cabal-file))
+              s-split-words
+              (-map 's-capitalize)
+              (s-join ""))))
+         (path
+          (f-join src-dir
+                  (if executable? "Main.hs" (concat module-name ".hs"))))
+         (str (if executable?
+                  skeletor-hs--main-file-content
+                (format skeletor-hs--library-file-content-format
+                        module-name)))
+         )
+    (f-write str 'utf-8 path)))
 
 (skeletor-define-template "haskell-project"
   :title "Haskell Project"
@@ -795,8 +833,11 @@ Sandboxes were introduced in cabal 1.18 ."
            (message "Initialising sandbox...")
            (skeletor-async-shell-command ,dir "cabal sandbox init"))
 
-         (let ((cabal-file (car (f-entries ,dir (lambda (f) (equal "cabal" (f-ext f)))))))
-           (skeletor-hs--post-process-cabal-file cabal-file))))))
+         (let ((cabal-file (car (f-entries ,dir (lambda (f) (equal "cabal" (f-ext f))))))
+               (src-dir (f-join ,dir "src")))
+           (skeletor-hs--post-process-cabal-file cabal-file)
+           (f-mkdir src-dir)
+           (skeletor-hs--init-src-file cabal-file src-dir))))))
 
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))

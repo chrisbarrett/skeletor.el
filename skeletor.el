@@ -128,6 +128,30 @@ when initialising virtualenv."
   :group 'skeletor-python
   :type '(repeat directory))
 
+(defgroup skeletor-haskell nil
+  "Configuration for haskell projects in Skeletor."
+  :group 'tools
+  :prefix "skeletor-haskell-")
+
+(defcustom skeletor-hs-main-file-content
+  "module Main where
+
+main :: IO ()
+main = undefined
+"
+  "The contents to insert when creating a Haskell main file."
+  :group 'skeletor-haskell
+  :type 'string)
+
+(defcustom skeletor-hs-library-file-content-format
+  "module %s where
+"
+  "Format string used to generate the contents of a new Haskell library file.
+The format string should have one `%s' specfier, which is
+replaced with the module name."
+  :group 'skeletor-haskell
+  :type 'string)
+
 ;;; -------------------------- Public Utilities --------------------------------
 
 (defun skeletor-shell-command (dir command &optional no-assert)
@@ -782,21 +806,6 @@ Sandboxes were introduced in cabal 1.18 ."
     (save-buffer)
     (kill-buffer)))
 
-(defvar skeletor-hs--main-file-content
-  "module Main where
-
-main :: IO ()
-main = undefined
-"
-  "The contents to insert when creating a Haskell main file.")
-
-(defvar skeletor-hs--library-file-content-format
-  "module %s where
-"
-  "Format string used to generate the contents of a new haskell library file.
-The format string should have one `%s' specfier, which is
-replaced with the module name.")
-
 (defun skeletor-hs--init-src-file (cabal-file src-dir)
   "Create either a Main.hs file or a toplevel library file.
 
@@ -815,8 +824,8 @@ SRC-DIR is the path to the project src directory."
           (f-join src-dir
                   (if executable? "Main.hs" (concat module-name ".hs"))))
          (str (if executable?
-                  skeletor-hs--main-file-content
-                (format skeletor-hs--library-file-content-format
+                  skeletor-hs-main-file-content
+                (format skeletor-hs-library-file-content-format
                         module-name)))
          )
     (f-write str 'utf-8 path)))

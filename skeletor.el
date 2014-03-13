@@ -538,6 +538,7 @@ Otherwise immediately initialise git."
   (cl-assert (stringp license-file-name) t)
   (cl-assert (functionp after-creation) t)
   (let ((constructor (intern (format "skeletor--create-%s" name)))
+        (title (or title (s-join " " (-map 's-capitalize (s-split-words name)))))
         (default-license-var (intern (format "%s-default-license" name)))
         (rs (eval substitutions))
         (exec-alist (eval requires-executables)))

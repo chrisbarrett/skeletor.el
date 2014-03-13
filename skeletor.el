@@ -738,6 +738,19 @@ TITLE is the name of an existing project skeleton."
   (lambda (dir)
     (skeletor-async-shell-command dir "make env")))
 
+(skeletor-define-template "elisp-package-with-docs"
+  :title "Elisp Package (with documentation)"
+  :requires-executables '(("make" . "http://www.gnu.org/software/make/")
+                          ("cask" . "https://github.com/cask/cask"))
+  :default-license (rx bol "gpl")
+  :substitutions
+  '(("__DESCRIPTION__"
+     . (lambda ()
+         (read-string "Description: "))))
+  :after-creation
+  (lambda (dir)
+    (skeletor-async-shell-command dir "make env")))
+
 (defun skeletor-py--read-python-bin ()
   "Read a python binary from the user."
   (->> skeletor-python-bin-search-path

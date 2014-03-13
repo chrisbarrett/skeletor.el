@@ -1,0 +1,11 @@
+# Generated files
+*.elc
+*-pkg.el
+*.tar
+TAGS
+doc/__PROJECT-NAME__.texi
+doc/__PROJECT-NAME__.info
+
+# Packages
+.cask
+elpa

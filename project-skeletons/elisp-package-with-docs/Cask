@@ -1,8 +1,10 @@
 (source melpa)
+(source org)
 
 (package-file "__PROJECT-NAME__.el")
 
 (development
+ (depends-on "org-plus-contrib")
  (depends-on "ert")
  (depends-on "cl-lib")
  (depends-on "flycheck")

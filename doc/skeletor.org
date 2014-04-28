@@ -237,11 +237,11 @@ all skeletons. It is an alist, where each element is a cons of =(STRING .
 REPLACEMENT)=. =REPLACEMENT= should be a string literal, a variable name, a
 function name, or a lambda expression.
 
-You can add your own items to =skel-globl-substitutions=. For example:
+You can add your own items to =skeletor-globl-substitutions=. For example:
 
 #+begin_src elisp
 (add-to-list 'skeletor-global-substitutions
-             '("__ORGANISATION__" "Masters of the Universe"))
+             '("__ORGANISATION__" . "Masters of the Universe"))
 
 (add-to-list 'skeletor-global-substitutions
              (cons "__HOME__" (getenv "HOME")))
@@ -323,4 +323,4 @@ tooling. You guys are stars!
 - [[http://damiencassou.seasidehosting.st][Damien Cassou]] contributed feedback and fixes to the Elisp template
 
 * GNU Free Documentation License
-@@info:@include fdl-1.3.texi@@
+@@info: @include fdl-1.3.texi @@

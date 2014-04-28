@@ -4,7 +4,7 @@
 
 ;; Author: Chris Barrett <chris.d.barrett@me.com>
 ;; Package-Requires: ((s "1.7.0") (f "0.14.0") (dash "2.2.0") (cl-lib "0.3") (emacs "24.1"))
-;; Version: 1.2.1
+;; Version: 1.2.2
 
 ;; This file is not part of GNU Emacs.
 
@@ -850,12 +850,12 @@ SRC-DIR is the path to the project src directory."
   :no-license? t
   :after-creation
   (lambda (dir)
+    (when (skeletor-hs--cabal-sandboxes-supported?)
+      (message "Initialising sandbox...")
+      (skeletor-shell-command dir "cabal sandbox init"))
+
     (skeletor-with-shell-setup dir "cabal init"
       `(lambda ()
-         (when (skeletor-hs--cabal-sandboxes-supported?)
-           (message "Initialising sandbox...")
-           (skeletor-async-shell-command ,dir "cabal sandbox init"))
-
          (let ((cabal-file (car (f-entries ,dir (lambda (f) (equal "cabal" (f-ext f))))))
                (src-dir (f-join ,dir "src")))
            (skeletor-hs--post-process-cabal-file cabal-file)

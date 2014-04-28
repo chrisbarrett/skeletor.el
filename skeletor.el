@@ -1,4 +1,4 @@
-;;; skeletor.el --- Provides project skeletons for Emacs
+;;; skeletor.el --- Provides project skeletons for Emacs  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013 Chris Barrett
 
@@ -855,12 +855,12 @@ SRC-DIR is the path to the project src directory."
       (skeletor-shell-command dir "cabal sandbox init"))
 
     (skeletor-with-shell-setup dir "cabal init"
-      `(lambda ()
-         (let ((cabal-file (car (f-entries ,dir (lambda (f) (equal "cabal" (f-ext f))))))
-               (src-dir (f-join ,dir "src")))
-           (skeletor-hs--post-process-cabal-file cabal-file)
-           (f-mkdir src-dir)
-           (skeletor-hs--init-src-file cabal-file src-dir))))))
+      (lambda ()
+        (let ((cabal-file (car (f-entries dir (lambda (f) (equal "cabal" (f-ext f))))))
+              (src-dir (f-join dir "src")))
+          (skeletor-hs--post-process-cabal-file cabal-file)
+          (f-mkdir src-dir)
+          (skeletor-hs--init-src-file cabal-file src-dir))))))
 
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))

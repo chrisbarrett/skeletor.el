@@ -734,10 +734,7 @@ TITLE is the name of an existing project skeleton."
   :substitutions
   '(("__DESCRIPTION__"
      . (lambda ()
-         (read-string "Description: "))))
-  :after-creation
-  (lambda (dir)
-    (skeletor-async-shell-command dir "make env")))
+         (read-string "Description: ")))))
 
 (skeletor-define-template "elisp-package-with-docs"
   :title "Elisp Package (with documentation)"
@@ -747,10 +744,7 @@ TITLE is the name of an existing project skeleton."
   :substitutions
   '(("__DESCRIPTION__"
      . (lambda ()
-         (read-string "Description: "))))
-  :after-creation
-  (lambda (dir)
-    (skeletor-async-shell-command dir "make env")))
+         (read-string "Description: ")))))
 
 (defun skeletor-py--read-python-bin ()
   "Read a python binary from the user."

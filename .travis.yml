@@ -9,9 +9,6 @@ install:
   - sudo apt-get install texinfo
   - curl -fsSkL https://raw.github.com/cask/cask/master/go | python
 
-before_script:
-  - make env
-
 script:
-  - make info
+  - make
   - make check

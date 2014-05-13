@@ -761,14 +761,6 @@ TITLE is the name of an existing project skeleton."
                                f))))
     (funcall skeletor-completing-read-function "Python binary: ")))
 
-(defun skeletor-py--create-virtualenv-dirlocals (dir)
-  "Create a .dir-locals file in DIR for virtualenv variables."
-  (save-excursion
-    (add-dir-local-variable nil 'virtualenv-default-directory dir)
-    (add-dir-local-variable nil 'virtualenv-workon (f-filename dir))
-    (save-buffer)
-    (kill-buffer)))
-
 (skeletor-define-template "python-library"
   :title "Python Library"
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")
@@ -776,8 +768,6 @@ TITLE is the name of an existing project skeleton."
   :substitutions '(("__PYTHON-BIN__" . skeletor-py--read-python-bin))
   :after-creation
   (lambda (dir)
-    (message "Finding python binaries...")
-    (skeletor-py--create-virtualenv-dirlocals dir)
     (skeletor-async-shell-command dir "make tooling")))
 
 (defun skeletor-hs--cabal-sandboxes-supported? ()

@@ -1,16 +1,16 @@
 PYTHON_BIN = __PYTHON-BIN__
-PIP        = ./env/bin/pip
+VIRTUALENV = ~/.virtualenvs/__PROJECT-NAME__
 
-all : env
+all : $(VIRTUALENV)
 
 # Configure virtualenv for this project.
-env :
-	virtualenv -p $(PYTHON_BIN) env
+$(VIRTUALENV) :
+	virtualenv -p $(PYTHON_BIN) $(VIRTUALENV)
 
 # Install editor tooling.
 .PHONY: tooling
-tooling : env
-	$(PIP) install jedi
-	$(PIP) install epc
-	$(PIP) install pylint
-	$(PIP) install pymacs
+tooling : $(VIRTUALENV)
+	pip install jedi
+	pip install epc
+	pip install pylint
+	pip install pymacs

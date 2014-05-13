@@ -23,7 +23,11 @@ PRECOMMIT_SRC  = $(SCRIPT)/pre-commit.sh
 PRECOMMIT_HOOK = $(GIT_DIR)/hooks/pre-commit
 
 .PHONY: all
-all : $(DIST)
+all : deps
+
+.PHONY: deps
+deps : $(PKG_DIR)
+$(PKG_DIR) :
 	$(CASK) install
 
 # Add precommit hook to run tests before committing.
@@ -34,7 +38,7 @@ $(PRECOMMIT_HOOK) :
 	chmod +x $(PRECOMMIT_HOOK)
 
 .PHONY: check
-check :
+check : deps
 	$(CASK) exec $(EMACS) $(EMACSFLAGS)  \
 	$(patsubst %,-l % , $(SRCS))\
 	$(patsubst %,-l % , $(TESTS))\
@@ -66,7 +70,7 @@ clean :
 $(DIST) : $(INFO_MANUAL)
 	$(CASK) package
 
-$(INFO_MANUAL) : $(DOC_ORG)
+$(INFO_MANUAL) : deps $(DOC_ORG)
 	$(CASK) exec $(EMACS) $(EMACSFLAGS) \
 	-l org -l ox-texinfo \
 	--file=$(DOC_ORG) -f org-texinfo-export-to-info

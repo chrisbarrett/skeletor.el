@@ -20,7 +20,11 @@ PRECOMMIT_SRC  = $(SCRIPT)/pre-commit.sh
 PRECOMMIT_HOOK = $(GIT_DIR)/hooks/pre-commit
 
 .PHONY: all
-all : $(DIST)
+all : deps
+
+.PHONY: deps
+deps : $(PKG_DIR)
+$(PKG_DIR) :
 	$(CASK) install
 
 # Add precommit hook to run tests before committing.
@@ -31,7 +35,7 @@ $(PRECOMMIT_HOOK) :
 	chmod +x $(PRECOMMIT_HOOK)
 
 .PHONY: check
-check :
+check : deps
 	$(CASK) exec $(EMACS) $(EMACSFLAGS)  \
 	$(patsubst %,-l % , $(SRCS))\
 	$(patsubst %,-l % , $(TESTS))\

@@ -47,32 +47,32 @@ The Skeletor manual
 @end ifnottex
 
 @menu
-* Overview::
-* Installation::
-* Usage::
-* Extending::
-* Acknowledgements::
-* GNU Free Documentation License::
+* Overview::                    
+* Installation::                
+* Usage::                       
+* Extending::                   
+* Acknowledgements::            
+* GNU Free Documentation License::  
 
 @detailmenu
  --- The Detailed Node Listing ---
 
 Extending
 
-* Project Skeletons::
-* Substitutions::
-* External Tools::
+* Project Skeletons::           
+* Substitutions::               
+* External Tools::              
 
 Project Skeletons
 
-* Creating a Skeleton Directory::
-* Configuring the Skeleton::
+* Creating a Skeleton Directory::  
+* Configuring the Skeleton::    
 
 Substitutions
 
-* Introduction::
-* Specifying Substitutions::
-* Embedded Elisp::
+* Introduction::                
+* Specifying Substitutions::    
+* Embedded Elisp::              
 
 @end detailmenu
 @end menu
@@ -88,19 +88,19 @@ parts of setting up a new project like version control, licenses and tooling.
 Skeletor comes with predefined project types so it is useful out-of-the-box:
 
 @itemize
-@item
+@item 
 Clojure
 
-@item
+@item 
 Elisp
 
-@item
+@item 
 Haskell
 
-@item
+@item 
 Python
 
-@item
+@item 
 Ruby
 
 @end itemize
@@ -135,9 +135,9 @@ the project and use Skeletor to perform additional configuration.
 
 
 @menu
-* Project Skeletons::
-* Substitutions::
-* External Tools::
+* Project Skeletons::           
+* Substitutions::               
+* External Tools::              
 @end menu
 
 @node Project Skeletons
@@ -150,8 +150,8 @@ following sections.
 
 
 @menu
-* Creating a Skeleton Directory::
-* Configuring the Skeleton::
+* Creating a Skeleton Directory::  
+* Configuring the Skeleton::    
 @end menu
 
 @node Creating a Skeleton Directory
@@ -287,7 +287,7 @@ the development environment and declares its dependency on these programs:
 (skeletor-define-template "elisp-package"
   ; ...
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")
-                          ("cask" . "https://github.com/cask/cask")))
+			  ("cask" . "https://github.com/cask/cask")))
 @end lisp
 
 Skeletor will search for these two programs when creating an instance of the
@@ -303,9 +303,9 @@ the contents of files according to user input when a project is created.
 
 
 @menu
-* Introduction::
-* Specifying Substitutions::
-* Embedded Elisp::
+* Introduction::                
+* Specifying Substitutions::    
+* Embedded Elisp::              
 @end menu
 
 @node Introduction
@@ -358,13 +358,13 @@ You can add your own items to @verb{~skeletor-globl-substitutions~}. For example
 
 @lisp
 (add-to-list 'skeletor-global-substitutions
-             '("__ORGANISATION__" . "Masters of the Universe"))
+	     '("__ORGANISATION__" . "Masters of the Universe"))
 
 (add-to-list 'skeletor-global-substitutions
-             (cons "__HOME__" (getenv "HOME")))
+	     (cons "__HOME__" (getenv "HOME")))
 
 (add-to-list 'skeletor-global-substitutions
-             (cons "__TIME__" (lambda () (format-time-string "%c"))))
+	     (cons "__TIME__" (lambda () (format-time-string "%c"))))
 @end lisp
 
 You can also define substitutions available to individual skeletons:
@@ -424,7 +424,7 @@ Ruby projects. Skeletor provides the following binding:
   :after-creation
   (lambda (dir)
     (when (and (executable-find "rspec")
-               (y-or-n-p "Create RSpec test suite? "))
+	       (y-or-n-p "Create RSpec test suite? "))
       (skeletor-shell-command dir "rspec --init"))))
 @end lisp
 
@@ -441,18 +441,17 @@ Muchas gracias to @uref{https://twitter.com/magnars,@@magnars} and @uref{https:/
 tooling. You guys are stars!
 
 @itemize
-@item
+@item 
 @uref{https://github.com/yasuyk,Yasuyuki Oka} added support for customising the completing-read function
 
-@item
+@item 
 @uref{http://damiencassou.seasidehosting.st,Damien Cassou} contributed feedback and fixes to the Elisp template
 
 @end itemize
 
 @node GNU Free Documentation License
 @chapter GNU Free Documentation License
- @include fdl-1.3.texi
 
-@c Emacs 24.3.50.1 (Org mode 8.2.6)
+@c Emacs 24.3.1 (Org mode 8.2.6)
 
 @bye

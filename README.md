@@ -246,7 +246,7 @@ function name, or a lambda expression.
 You can add your own items to `skel-globl-substitutions`. For example:
 
     (add-to-list 'skeletor-global-substitutions
-                 '("__ORGANISATION__" "Masters of the Universe"))
+                 '("__ORGANISATION__" . "Masters of the Universe"))
 
     (add-to-list 'skeletor-global-substitutions
                  (cons "__HOME__" (getenv "HOME")))

@@ -2,8 +2,6 @@ CWD          = $(shell pwd)
 DIST         = $(CWD)/dist
 DOC          = $(CWD)/doc
 SKELETONS    = $(CWD)/project-skeletons
-SCRIPT       = $(CWD)/script
-GIT_DIR      = $(CWD)/.git
 CASK        ?= cask
 EMACS       ?= emacs
 EMACSFLAGS   = --batch -Q
@@ -16,9 +14,6 @@ SRCS         = $(filter-out %-pkg.el, $(wildcard *.el))
 TESTS        = $(filter-out %-pkg.el, $(wildcard test/*.el))
 PACKAGE_TAR  = $(DIST)/__PROJECT-NAME__-$(VERSION).tar
 
-PRECOMMIT_SRC  = $(SCRIPT)/pre-commit.sh
-PRECOMMIT_HOOK = $(GIT_DIR)/hooks/pre-commit
-
 .PHONY: all
 all : deps
 
@@ -26,13 +21,6 @@ all : deps
 deps : $(PKG_DIR)
 $(PKG_DIR) :
 	$(CASK) install
-
-# Add precommit hook to run tests before committing.
-.PHONY: hook
-hook : $(PRECOMMIT_HOOK)
-$(PRECOMMIT_HOOK) :
-	ln -s $(PRECOMMIT_SRC) $(PRECOMMIT_HOOK)
-	chmod +x $(PRECOMMIT_HOOK)
 
 .PHONY: check
 check : deps
@@ -60,6 +48,7 @@ clean-all : clean
 .PHONY: clean
 clean :
 	cask clean-elc
+	rm -f *.elc
 	rm -rf $(DIST)
 
 $(DIST) :

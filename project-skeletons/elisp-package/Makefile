@@ -14,7 +14,7 @@ USER_ELPA_D  = $(USER_EMACS_D)/elpa
 
 SRCS         = $(filter-out %-pkg.el, $(wildcard *.el))
 TESTS        = $(filter-out %-pkg.el, $(wildcard test/*.el))
-PACKAGE_TAR  = $(DIST)/__PACKAGE-NAME__-$(VERSION).tar
+PACKAGE_TAR  = $(DIST)/__PROJECT-NAME__-$(VERSION).tar
 
 PRECOMMIT_SRC  = $(SCRIPT)/pre-commit.sh
 PRECOMMIT_HOOK = $(GIT_DIR)/hooks/pre-commit
@@ -48,7 +48,7 @@ install : $(DIST) $(USER_ELPA_D)
 
 .PHONY: uninstall
 uninstall :
-	rm -rf $(USER_ELPA_D)/__PACKAGE-NAME__-*
+	rm -rf $(USER_ELPA_D)/__PROJECT-NAME__-*
 
 .PHONY: reinstall
 reinstall : clean uninstall install

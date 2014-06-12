@@ -1,83 +1,75 @@
-CWD          = $(shell pwd)
-DIST         = $(CWD)/dist
-DOC          = $(CWD)/doc
-SKELETONS    = $(CWD)/project-skeletons
-SCRIPT       = $(CWD)/script
-GIT_DIR      = $(CWD)/.git
 CASK        ?= cask
 EMACS       ?= emacs
+DIST        ?= dist
 EMACSFLAGS   = --batch -Q
+
 VERSION     := $(shell EMACS=$(EMACS) $(CASK) version)
-PKG_DIR     := $(shell EMACS=$(EMACS) $(CASK) package-directory)
-USER_EMACS_D = ~/.emacs.d
-USER_ELPA_D  = $(USER_EMACS_D)/elpa
+PKG_DEPS    := $(shell EMACS=$(EMACS) $(CASK) package-directory)
 
-SRCS         = $(filter-out %-pkg.el, $(wildcard *.el))
+EMACS_D      = ~/.emacs.d
+USER_ELPA_D  = $(EMACS_D)/elpa
+
 TESTS        = $(filter-out %-pkg.el, $(wildcard test/*.el))
-DOC_ORG      = $(DOC)/skeletor.org
-DOC_TEXI     = $(DOC)/skeletor.texi
+DOC          = doc
+ORG_MANUAL   = $(DOC)/skeletor.org
 INFO_MANUAL  = $(DOC)/skeletor.info
-PACKAGE_TAR  = $(DIST)/skeletor-$(VERSION).tar
 
-PRECOMMIT_SRC  = $(SCRIPT)/pre-commit.sh
-PRECOMMIT_HOOK = $(GIT_DIR)/hooks/pre-commit
+DIST_SRCS      = $(patsubst %, $(DIST)/%, $(wildcard *.el))
+DIST_README    = $(DIST)/skeletor-readme.txt
+DIST_TAR       = $(DIST)/skeletor-$(VERSION).tar
+DIST_SKELETONS = $(DIST)/project-skeletons
+DIST_MANUAL    = $(DIST)/skeletor.info
 
-.PHONY: all
-all : deps
 
-.PHONY: deps
-deps : $(PKG_DIR)
-$(PKG_DIR) :
+.PHONY: all check install uninstall reinstall clean-all clean
+all : $(PKG_DEPS) $(DIST_TAR)
+
+$(PKG_DEPS) :
 	$(CASK) install
 
-# Add precommit hook to run tests before committing.
-.PHONY: hook
-hook : $(PRECOMMIT_HOOK)
-$(PRECOMMIT_HOOK) :
-	ln -s $(PRECOMMIT_SRC) $(PRECOMMIT_HOOK)
-	chmod +x $(PRECOMMIT_HOOK)
-
-.PHONY: check
-check : deps
+check : $(PKG_DEPS)
 	$(CASK) exec $(EMACS) $(EMACSFLAGS)  \
-	$(patsubst %,-l % , $(SRCS))\
+	$(patsubst %,-l % , $(DIST_SRCS))\
 	$(patsubst %,-l % , $(TESTS))\
 	-f ert-run-tests-batch-and-exit
 
-.PHONY: install
-install : $(DIST) $(USER_ELPA_D)
+install : $(DIST_TAR)
 	$(EMACS) $(EMACSFLAGS) -l package \
-	-f package-initialize  --eval '(package-install-file "$(PACKAGE_TAR)")'
+	-f package-initialize  --eval '(package-install-file "$(DIST_TAR)")'
 
-.PHONY: uninstall
 uninstall :
 	rm -rf $(USER_ELPA_D)/skeletor-*
 
-.PHONY: reinstall
 reinstall : clean uninstall install
 
-.PHONY: clean-all
 clean-all : clean
-	rm -rf $(PKG_DIR)
+	rm -rf $(PKG_DEPS)
 
-.PHONY: clean
-clean : clean-skeletons
-	cask clean-elc
+clean :
+	$(CASK) clean-elc
+	rm -f *.elc
 	rm -rf $(DIST)
-	rm -f $(DOC_TEXI)
 	rm -f $(INFO_MANUAL)
 
-.PHONY: clean-skeletons
-clean-skeletons :
-	find -E $(SKELETONS) -regex '.*\.(pyc|elc)' -delete
+$(DIST_TAR) : $(DIST_README) $(DIST_SRCS) $(DIST_MANUAL) $(DIST_SKELETONS)
+	tar -cvf $@ -C $(DIST) --exclude $(@F) .
 
-$(DIST) : $(INFO_MANUAL)
-	$(CASK) package
+$(DIST_README) :
+	$(CASK) package $(DIST)
 
-$(INFO_MANUAL) : deps $(DOC_ORG)
+$(DIST_SRCS) : $(DIST)
+	cp -f $(@F) $@
+
+$(DIST) :
+	mkdir $(DIST)
+
+$(DIST_SKELETONS) :
+	cp -rf $(@F) $@
+
+$(DIST_MANUAL) : $(INFO_MANUAL)
+	cp -f $(DOC)/$(@F) $@
+
+$(INFO_MANUAL) : $(PKG_DEPS) $(ORG_MANUAL)
 	$(CASK) exec $(EMACS) $(EMACSFLAGS) \
 	-l org -l ox-texinfo \
-	--file=$(DOC_ORG) -f org-texinfo-export-to-info
-
-$(USER_ELPA_D) :
-	mkdir -p $(USER_ELPA_D)
+	--file=$(ORG_MANUAL) -f org-texinfo-export-to-info

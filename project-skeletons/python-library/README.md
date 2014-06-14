@@ -6,8 +6,12 @@ __SUMMARY__
 
 ## Contributing
 
-Yes, please do! See CONTRIBUTING for guidelines.
+Yes, please do! See [CONTRIBUTING][] for guidelines.
 
 ## License
 
-See __LICENSE-FILE-NAME__. Copyright (c) __YEAR__ __USER-NAME__.
+See [COPYING][]. Copyright (c) __YEAR__ __USER-NAME__.
+
+
+[CONTRIBUTING]: ./CONTRIBUTING.md
+[COPYING]: ./__LICENSE-FILE-NAME__

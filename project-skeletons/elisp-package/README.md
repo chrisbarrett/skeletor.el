@@ -12,10 +12,15 @@ build the project.
     cd __PROJECT-NAME__
     make && make install
 
+
 ## Contributing
 
-Yes, please do! See CONTRIBUTING.md for guidelines.
+Yes, please do! See [CONTRIBUTING][] for guidelines.
 
 ## License
 
-See __LICENSE-FILE-NAME__. Copyright (c) __YEAR__ __USER-NAME__.
+See [COPYING][]. Copyright (c) __YEAR__ __USER-NAME__.
+
+
+[CONTRIBUTING]: ./CONTRIBUTING.md
+[COPYING]: ./__LICENSE-FILE-NAME__

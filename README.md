@@ -118,7 +118,9 @@ macro to configure how the project template will be created.
 
     In the simplest case, you just need to tell Skeletor the name of the template:
 
-        (skeletor-define-template "my-elisp-package")
+    ```lisp
+    (skeletor-define-template "my-elisp-package")
+    ```
 
     This will add `my-elisp-package` to the list of available projects. You can now
     create an instance by calling `M-x skeletor-create-project my-elisp-package`. Skeletor
@@ -130,8 +132,10 @@ macro to configure how the project template will be created.
     You can set a custom title for your project type using the `:title` keyword
     parameter.
 
-        (skeletor-define-template "my-elisp-package"
-          :title "My Elisp Package")
+    ```lisp
+    (skeletor-define-template "my-elisp-package"
+      :title "My Elisp Package")
+    ```
 
     The title is the string that represents the project in the `skeletor-create-project`
     prompt.
@@ -144,9 +148,11 @@ macro to configure how the project template will be created.
 
     For example, Elisp projects are generally licensed under GPL:
 
-        (skeletor-define-template "my-elisp-package"
-          ; ...
-          :default-license (rx bol "gpl"))
+    ```lisp
+    (skeletor-define-template "my-elisp-package"
+      ; ...
+      :default-license (rx bol "gpl"))
+    ```
 
     Note that the argument to `:default-license` is a regular expression so you
     don't have to specify the license name precisely.
@@ -160,11 +166,13 @@ macro to configure how the project template will be created.
     For example, the Elisp project runs a Makefile task in the background to
     configure the development environment:
 
-        (skeletor-define-template "elisp-package"
-          ; ...
-          :after-creation
-          (lambda (dir)
-            (skeletor-async-shell-command dir "make env")))
+    ```lisp
+    (skeletor-define-template "elisp-package"
+      ; ...
+      :after-creation
+      (lambda (dir)
+        (skeletor-async-shell-command dir "make env")))
+    ```
 
     You can do anything you want in the `after-creation` command, but it is a good
     idea to automate as much of the environment setup as possible using a makefile
@@ -178,11 +186,14 @@ macro to configure how the project template will be created.
     `skeletor-async-shell-command` functions for this purpose. These functions output to
     special buffers and assert that their shell commands were successful.
 
-        (skeletor-define-template "elisp-package"
-          ; ...
-          :after-creation
-          (lambda (dir)
-            (skeletor-async-shell-command dir "make env")))
+
+    ```lisp
+    (skeletor-define-template "elisp-package"
+      ; ...
+      :after-creation
+      (lambda (dir)
+        (skeletor-async-shell-command dir "make env")))
+    ```
 
     Because such external tools may not be installed on every system, Skeletor
     provides a way to declare these requirements up-front using the
@@ -192,10 +203,13 @@ macro to configure how the project template will be created.
     For example, the `elisp-package` template uses `make` and `Cask` to bootstrap
     the development environment and declares its dependency on these programs:
 
-        (skeletor-define-template "elisp-package"
-          ; ...
-          :requires-executables '(("make" . "http://www.gnu.org/software/make/")
-                                  ("cask" . "https://github.com/cask/cask")))
+
+    ```lisp
+    (skeletor-define-template "elisp-package"
+      ; ...
+      :requires-executables '(("make" . "http://www.gnu.org/software/make/")
+                              ("cask" . "https://github.com/cask/cask")))
+    ```
 
     Skeletor will search for these two programs when creating an instance of the
     template. It will display a help window with download links if either of them
@@ -245,20 +259,24 @@ function name, or a lambda expression.
 
 You can add your own items to `skel-globl-substitutions`. For example:
 
-    (add-to-list 'skeletor-global-substitutions
-                 '("__ORGANISATION__" . "Masters of the Universe"))
+```lisp
+(add-to-list 'skeletor-global-substitutions
+             '("__ORGANISATION__" . "Masters of the Universe"))
 
-    (add-to-list 'skeletor-global-substitutions
-                 (cons "__HOME__" (getenv "HOME")))
+(add-to-list 'skeletor-global-substitutions
+             (cons "__HOME__" (getenv "HOME")))
 
-    (add-to-list 'skeletor-global-substitutions
-                 (cons "__TIME__" (lambda () (format-time-string "%c"))))
+(add-to-list 'skeletor-global-substitutions
+             (cons "__TIME__" (lambda () (format-time-string "%c"))))
+```
 
 You can also define substitutions available to individual skeletons:
 
-    (skeletor-define-template "my-package"
-      :substitutions
-      '(("__DESCRIPTION__" . (lambda () (read-string "Description: ")))))
+```lisp
+(skeletor-define-template "my-package"
+  :substitutions
+  '(("__DESCRIPTION__" . (lambda () (read-string "Description: ")))))
+```
 
 This will prompt you to enter a description when creating an instance of this
 project.
@@ -292,20 +310,22 @@ that creates the project structure itself.
 For example, [Bundler](http://bundler.io) is a popular tool in the Ruby community that can create new
 Ruby projects. Skeletor provides the following binding:
 
-    (skeletor-define-constructor "Ruby Gem"
-      :requires-executables '(("bundle" . "http://bundler.io"))
-      :no-license? t
+```lisp
+(skeletor-define-constructor "Ruby Gem"
+  :requires-executables '(("bundle" . "http://bundler.io"))
+  :no-license? t
 
-      :initialise
-      (lambda (name project-dir)
-        (skeletor-shell-command
-         project-dir (format "bundle gem %s" (shell-quote-argument name))))
+  :initialise
+  (lambda (name project-dir)
+    (skeletor-shell-command
+     project-dir (format "bundle gem %s" (shell-quote-argument name))))
 
-      :after-creation
-      (lambda (dir)
-        (when (and (executable-find "rspec")
-                   (y-or-n-p "Create RSpec test suite? "))
-          (skeletor-shell-command dir "rspec --init"))))
+  :after-creation
+  (lambda (dir)
+    (when (and (executable-find "rspec")
+               (y-or-n-p "Create RSpec test suite? "))
+      (skeletor-shell-command dir "rspec --init"))))
+```
 
 Skeletor will use `bundle` to create the project structure, offer to create an
 RSpec test suite, then add everything to version control.
@@ -313,28 +333,30 @@ RSpec test suite, then add everything to version control.
 ## Contributing ##
 
 Yes, please do! More project types are especially welcome. Read over
-[CONTRIBUTING](https://github.com/chrisbarrett/skeletor.el/blob/master/CONTRIBUTING.md)
-for guidelines.
+[CONTRIBUTING][] for guidelines.
 
 ## Acknowledgements ##
 
-Skeletor is based on [@magnars](https://twitter.com/magnars)' Project
-Archetypes--one of many cool features of his
-[.emacs.d](https://github.com/magnars/.emacs.d). This, and other goodies, are
-covered in
-[this chat session](http://sachachua.com/blog/2013/11/emacs-chat-magnar-sveen-emacs-rocks/)
-with Sacha Chua.
+Skeletor is based on [@magnars][]' Project Archetypes--one of many cool features
+of his [.emacs.d](https://github.com/magnars/.emacs.d). This, and other goodies,
+are covered in this [emacs chat session][] with Sacha Chua.
 
-Muchas gracias to [@magnars](https://twitter.com/magnars) and
-[@rejeep](https://twitter.com/rejeep) for their excellent libraries and tooling.
-You guys are stars!
+Muchas gracias to [@magnars][] and [@rejeep][] for their excellent libraries and
+tooling. You guys are stars!
 
-- [Yasuyuki Oka](https://github.com/yasuyk) added support for customising the
-  completing-read function
-- [Damien Cassou](http://damiencassou.seasidehosting.st) contributed feedback
-  and fixes to the Elisp template
+- [Yasuyuki Oka][] added support for customising the completing-read function
+- [Damien Cassou][] contributed feedback and fixes to the Elisp template
 
 ## License ##
 
-See [COPYING](https://github.com/chrisbarrett/skeletor.el/blob/master/COPYING).
-Copyright (c) 2013 Chris Barrett.
+See [COPYING][]. Copyright (c) 2014 Chris Barrett.
+
+
+[@magnars]: https://twitter.com/magnars
+[@rejeep]: https://twitter.com/rejeep
+[Yasuyuki Oka]: https://github.com/yasuyk
+[Damien Cassou]: http://damiencassou.seasidehosting.st
+[emacs chat session]: http://sachachua.com/blog/2013/11/emacs-chat-magnar-sveen-emacs-rocks/
+
+[CONTRIBUTING]: ./CONTRIBUTING.md
+[COPYING]: ./COPYING

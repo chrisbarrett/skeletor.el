@@ -14,7 +14,8 @@ DOC          = doc
 ORG_MANUAL   = $(DOC)/skeletor.org
 INFO_MANUAL  = $(DOC)/skeletor.info
 
-DIST_SRCS      = $(patsubst %, $(DIST)/%, $(wildcard *.el))
+DIST_SRCS      = $(DIST)/skeletor.el
+DIST_PKG       = $(DIST)/skeletor-pkg.el
 DIST_README    = $(DIST)/skeletor-readme.txt
 DIST_TAR       = $(DIST)/skeletor-$(VERSION).tar
 DIST_SKELETONS = $(DIST)/project-skeletons
@@ -29,7 +30,7 @@ $(PKG_DEPS) :
 
 check : $(PKG_DEPS)
 	$(CASK) exec $(EMACS) $(EMACSFLAGS)  \
-	$(patsubst %,-l % , $(DIST_SRCS))\
+	$(patsubst %,-l % , $(filter-out %-pkg.el, $(DIST_SRCS)))\
 	$(patsubst %,-l % , $(TESTS))\
 	-f ert-run-tests-batch-and-exit
 
@@ -50,14 +51,19 @@ clean :
 	rm -f *.elc
 	rm -rf $(DIST)
 	rm -f $(INFO_MANUAL)
+	rm -f *-pkg.el
 
-$(DIST_TAR) : $(DIST_README) $(DIST_SRCS) $(DIST_MANUAL) $(DIST_SKELETONS)
+$(DIST_TAR) : $(DIST_README) $(DIST_PKG) $(DIST_SRCS) $(DIST_MANUAL) $(DIST_SKELETONS)
 	tar -cvf $@ -C $(DIST) --exclude $(@F) .
 
 $(DIST_README) :
 	$(CASK) package $(DIST)
 
 $(DIST_SRCS) : $(DIST)
+	cp -f $(@F) $@
+
+$(DIST_PKG) : $(DIST)
+	cask pkg-file
 	cp -f $(@F) $@
 
 $(DIST) :

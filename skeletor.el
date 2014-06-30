@@ -726,6 +726,9 @@ TITLE is the name of an existing project skeleton."
 
 ;;; ------------------------ Built-in skeletons --------------------------------
 
+(skeletor-define-template "generic"
+  :title "Generic Project")
+
 (skeletor-define-template "elisp-package"
   :title "Elisp Package"
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")

@@ -67,6 +67,9 @@ You will be guided through any configuration needed.
 By default, new projects are created in `~/Projects`. Customise
 `skeletor-project-directory` to change this.
 
+An additional command, `skeletor-create-project-at`, allows you to choose the
+directory where the project will be created.
+
 ## Extending ##
 
 Skeletor allows you to define new types of projects. You can either create a

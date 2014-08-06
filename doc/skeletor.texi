@@ -126,6 +126,9 @@ You will be guided through any configuration needed.
 By default, new projects are created in @verb{,~/Projects,}. Customise
 @verb{~skeletor-project-directory~} to change this.
 
+An additional command, @verb{~skeletor-create-project-at~}, allows you to choose the
+directory where the project will be created.
+
 @node Extending
 @chapter Extending
 
@@ -452,6 +455,6 @@ tooling. You guys are stars!
 @node GNU Free Documentation License
 @chapter GNU Free Documentation License
 
-@c Emacs 24.3.1 (Org mode 8.2.6)
+@c Emacs 24.3.50.1 (Org mode 8.2.7b)
 
 @bye

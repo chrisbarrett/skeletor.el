@@ -475,6 +475,19 @@ Otherwise immediately initialise git."
                           prompt (-map 'car xs) nil t d)))
     (cdr (assoc choice xs))))
 
+;; IO SkeletorProjectType
+(defun skeletor--read-project-type ()
+  "Prompt the user to select a project skeleton."
+  (let ((title
+         (completing-read "Skeleton: "
+                          (->> skeletor--project-types
+                            (-map 'SkeletorProjectType-title)
+                            (-sort 'string<))
+                          nil t)))
+
+    (--first (equal title (SkeletorProjectType-title it))
+             skeletor--project-types)))
+
 ;; {String} -> IO String
 (cl-defun skeletor--read-project-name (&optional (prompt "Project Name: "))
   "Read a project name from the user."
@@ -710,19 +723,25 @@ This can be used to add bindings for command-line tools.
        (add-to-list 'skeletor--project-types (SkeletorProjectType ,title ',constructor)))))
 
 ;;;###autoload
-(defun skeletor-create-project (title)
+(defun skeletor-create-project (skeleton)
   "Interactively create a new project with Skeletor.
-TITLE is the name of an existing project skeleton."
-  (interactive
-   (list (completing-read "Skeleton: "
-                          (->> skeletor--project-types
-                            (-map 'SkeletorProjectType-title)
-                            (-sort 'string<))
-                          nil t)))
 
-  (funcall (->> skeletor--project-types
-             (--first (equal title (SkeletorProjectType-title it)))
-             SkeletorProjectType-constructor)))
+SKELETON is a SkeletorProjectType."
+  (interactive (list (skeletor--read-project-type)))
+  (funcall (SkeletorProjectType-constructor skeleton)))
+
+;;;###autoload
+(defun skeletor-create-project-at (dir skeleton)
+  "Interactively create a new project with Skeletor.
+
+DIR is destination directory, which must exist.
+
+SKELETON is a SkeletorProjectType."
+  (interactive (list (ido-read-directory-name "Create at: " nil nil t)
+                     (skeletor--read-project-type)))
+  ;; Dynamically rebind the project directory.
+  (let ((skeletor-project-directory dir))
+    (skeletor-create-project skeleton)))
 
 ;;; ------------------------ Built-in skeletons --------------------------------
 

@@ -6,37 +6,27 @@ parts of setting up a new project like version control, licenses and tooling.
 Skeletor comes with a number of predefined predefined templates and allows you
 to easily create your own.
 
-<div id="table-of-contents">
-<h2>Table of Contents</h2>
-<div id="text-table-of-contents">
-<ul>
-<li><a href="#supported-project-types">1. Supported Project Types</a></li>
-<li><a href="#installation">2. Installation</a></li>
-<li><a href="#usage">3. Usage</a></li>
-<li><a href="#extending">4. Extending</a>
-<ul>
-<li><a href="#project-skeletons">4.1. Project Skeletons</a>
-<ul>
-<li><a href="#creating-a-skeleton-directory">4.1.1. Creating a Skeleton Directory</a></li>
-<li><a href="#configuring-the-skeleton">4.1.2. Configuring the Skeleton</a></li>
-</ul>
-</li>
-<li><a href="#substitutions">4.2. Substitutions</a>
-<ul>
-<li><a href="#introduction">4.2.1. Introduction</a></li>
-<li><a href="#specifying-substitutions">4.2.2. Specifying Substitutions</a></li>
-<li><a href="#embedded-elisp">4.2.3. Embedded Elisp</a></li>
-</ul>
-</li>
-<li><a href="#external-tools">4.3. External Tools</a></li>
-</ul>
-</li>
-<li><a href="#contributing">5. Contributing</a></li>
-<li><a href="#acknowledgements">6. Acknowledgements</a></li>
-<li><a href="#license">7. License</a></li>
-</ul>
-</div>
-</div>
+## Table of Contents ##
+
+- [ skeletor.el ](#user-content--skeletorel-)
+	- [Supported Project Types](#user-content-supported-project-types)
+	- [Installation](#user-content-installation)
+		- [MELPA Installation](#user-content-melpa-installation)
+		- [Manual installation](#user-content-manual-installation)
+	- [Usage](#user-content-usage)
+	- [Extending](#user-content-extending)
+		- [Project Skeletons](#user-content-project-skeletons)
+			- [Creating a Skeleton Directory](#user-content-creating-a-skeleton-directory)
+			- [Configuring the Skeleton](#user-content-configuring-the-skeleton)
+		- [Substitutions](#user-content-substitutions)
+			- [Introduction](#user-content-introduction)
+			- [Specifying Substitutions](#user-content-specifying-substitutions)
+			- [Embedded Elisp](#user-content-embedded-elisp)
+		- [External Tools](#user-content-external-tools)
+	- [Contributing](#user-content-contributing)
+	- [Acknowledgements](#user-content-acknowledgements)
+	- [License](#user-content-license)
+
 
 ## Supported Project Types ##
 

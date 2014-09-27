@@ -56,7 +56,7 @@ skeleton."
   :group 'skeletor
   :type 'directory)
 
-(defcustom skeletor-user-organisation nil
+(defcustom skeletor-user-organisation (getenv "ORGANIZATION")
   "Used in template expansions to set the user organisation."
   :group 'skeletor
   :type '(choice (const :tag "None" nil)

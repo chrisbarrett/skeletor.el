@@ -27,7 +27,44 @@ Skeletor comes with predefined project types so it is useful out-of-the-box:
 Skeletor is designed to be extensible so you can create your own templates.
 
 * Installation
-You will need Emacs 24+, =make= and [[https://github.com/cask/cask][Cask]] to build the project.
+Skeletor is available on [[http://melpa.milkbox.net][MELPA]]. This is the easiest way to install.
+
+** MELPA Installation
+Add the following to your init.el:
+
+#+begin_src emacs-lisp
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(when (< emacs-major-version 24)
+  ;; For important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+(package-initialize)
+#+end_src
+
+Run the following to install Skeletor:
+
+#+begin_example
+M-x package-install skeletor
+#+end_example
+
+** Manual installation
+You will need Emacs 24+, =make= and [[https://github.com/cask/cask][Cask]] to build the project. You will also
+need to configure MELPA to install dependencies.
+
+Add the following to your init.el:
+
+#+begin_src emacs-lisp
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(when (< emacs-major-version 24)
+  ;; For important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+(package-initialize)
+#+end_src
+
+Then run the following in the shell to clone Skeletor and install it.
 
 #+begin_src sh
 cd

@@ -52,12 +52,51 @@ Skeletor is designed to be extensible so you can create your own templates.
 
 ## Installation ##
 
-You will need Emacs 24+, `make` and [Cask](https://github.com/cask/cask) to build the project.
+Skeletor is available on [MELPA][]. This is the easiest way to install.
 
-    cd
-    git clone git@github.com:chrisbarrett/skeletor.el.git
-    cd skeletor
-    make && make install
+### MELPA Installation ###
+
+Add the following to your init.el:
+
+```lisp
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(when (< emacs-major-version 24)
+  ;; For important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+(package-initialize)
+```
+
+Run the following in Emacs to install Skeletor:
+
+    M-x package-install skeletor
+
+### Manual installation ###
+
+You will need Emacs 24+, _make_ and [Cask][] to build the project. You will also
+need to configure MELPA to install dependencies.
+
+Add the following to your init.el:
+
+```lisp
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(when (< emacs-major-version 24)
+  ;; For important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+(package-initialize)
+```
+
+Then run the following in the shell to clone Skeletor and install it.
+
+```sh
+cd
+git clone git@github.com:chrisbarrett/skeletor.el.git
+cd skeletor
+make && make install
+```
 
 ## Usage ##
 
@@ -355,6 +394,8 @@ tooling. You guys are stars!
 See [COPYING][]. Copyright (c) 2014 Chris Barrett.
 
 
+[CASK]: https://github.com/cask/cask
+[MELPA]: http://melpa.milkbox.net
 [@magnars]: https://twitter.com/magnars
 [@rejeep]: https://twitter.com/rejeep
 [Yasuyuki Oka]: https://github.com/yasuyk

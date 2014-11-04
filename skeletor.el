@@ -69,8 +69,8 @@ skeleton."
 
 (defcustom skeletor-global-substitutions
   (list (cons "__YEAR__" (format-time-string "%Y"))
-        (cons "__USER-NAME__" user-full-name)
-        (cons "__USER-MAIL-ADDRESS__" user-mail-address)
+        (cons "__USER-NAME__" (lambda () user-full-name))
+        (cons "__USER-MAIL-ADDRESS__" (lambda () user-mail-address))
         (cons "__ORGANISATION__" (lambda ()
                                    (or skeletor-user-organisation
                                        user-full-name))))

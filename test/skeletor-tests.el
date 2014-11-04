@@ -153,6 +153,11 @@ Elements are compared using `equal'."
   (should (--only-some? (s-starts-with? template-name (f-filename it))
                         (f-directories destination-path nil t))))
 
+(ert-deftest transforms-gitignore-in-template-to-dotgitignore ()
+  (let ((gitignores (f-files destination-path
+                             (lambda (it) (equal ".gitignore" (f-filename it))))))
+    (should (equal 1 (length gitignores)))))
+
 (provide 'skeletor-tests)
 
 ;;; skeletor-tests.el ends here

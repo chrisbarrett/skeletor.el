@@ -324,7 +324,8 @@ Return a SkeletorExpansionSpec.
   (cl-assert (listp substitutions))
   (cl-assert (SkeletorTemplate-p template))
   (cl-flet ((expand (it)
-                    (->> (skeletor--replace-all substitutions it)
+                    (->> (skeletor--replace-all (cons (cons "__DOT__" ".") substitutions)
+                                                it)
                       (s-chop-prefix (SkeletorTemplate-path template))
                       (s-prepend (s-chop-suffix (f-path-separator) dest)))))
     (SkeletorExpansionSpec

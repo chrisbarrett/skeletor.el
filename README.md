@@ -36,6 +36,7 @@ Skeletor comes with predefined project types so it is useful out-of-the-box:
 -   Haskell
 -   Python
 -   Ruby
+-   Scala
 
 Skeletor is designed to be extensible so you can create your own templates.
 

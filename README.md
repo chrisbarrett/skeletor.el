@@ -1,4 +1,8 @@
-# <img align="right" src="assets/skeletor.jpg"> skeletor.el [![Build Status](https://travis-ci.org/chrisbarrett/skeletor.el.png?branch=master)](https://travis-ci.org/chrisbarrett/skeletor.el) [![MELPA](http://melpa.org/packages/skeletor-badge.svg)](http://melpa.org/#/skeletor)
+# <img align="right" src="assets/skeletor.jpg">
+skeletor.el
+
+[![Build Status](https://travis-ci.org/chrisbarrett/skeletor.el.png?branch=master)](https://travis-ci.org/chrisbarrett/skeletor.el)
+[![MELPA](http://melpa.org/packages/skeletor-badge.svg)](http://melpa.org/#/skeletor)
 
 Skeletor provides project templates for Emacs. It also automates the mundane
 parts of setting up a new project like version control, licenses and tooling.

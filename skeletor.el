@@ -171,6 +171,11 @@ to obtain its version."
   :group 'skeletor-scala
   :type 'string)
 
+(defcustom skeletor-scala-use-ensime nil
+  "When non-nil, add an ENSIME configuration file to scala projects."
+  :group 'skeletor
+  :type 'boolean)
+
 ;;; -------------------------- Public Utilities --------------------------------
 
 (defun skeletor-shell-command (dir command &optional no-assert)
@@ -949,8 +954,9 @@ This is a lengthy operation so the results are cached to
   :substitutions '(("__SCALA-VERSION__" . skeletor-scala--version))
   :after-creation
   (lambda (dir)
-    (message "Configuring SBT and ENSIME...")
-    (skeletor-async-shell-command dir "sbt gen-ensime")))
+    (when skeletor-scala-use-ensime
+      (message "Configuring SBT and ENSIME...")
+      (skeletor-async-shell-command dir "sbt gen-ensime"))))
 
 (provide 'skeletor)
 

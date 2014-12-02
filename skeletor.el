@@ -937,18 +937,20 @@ This is a lengthy operation so the results are cached to
   (or skeletor-scala-version
       (progn
         (message "Getting Scala version number...")
-        (cadr (s-match (rx (+ (not (any digit))) (group (+ (any digit "."))))
-                       (shell-command-to-string "scala -version"))))))
+        (let* ((str (shell-command-to-string "scala -version"))
+               (vers (cadr (s-match (rx (+ (not (any digit))) (group (+ (any digit ".")))) str))))
+          (setq skeletor-scala-version vers)
+          vers))))
 
 (skeletor-define-template "scala-project"
-                          :title "Scala Project"
-                          :requires-executables '(("scala" . "http://www.scala-lang.org")
-                                                  ("sbt" . "http://www.scala-sbt.org"))
-                          :substitutions '(("__SCALA-VERSION__" . skeletor--scala-version))
-                          :after-creation
-                          (lambda (dir)
-                            (message "Configuring SBT and ENSIME...")
-                            (skeletor-async-shell-command dir "sbt ensime")))
+  :title "Scala Project"
+  :requires-executables '(("scala" . "http://www.scala-lang.org")
+                          ("sbt" . "http://www.scala-sbt.org"))
+  :substitutions '(("__SCALA-VERSION__" . skeletor--scala-version))
+  :after-creation
+  (lambda (dir)
+    (message "Configuring SBT and ENSIME...")
+    (skeletor-async-shell-command dir "sbt ensime")))
 
 (provide 'skeletor)
 

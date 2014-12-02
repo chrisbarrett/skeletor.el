@@ -950,7 +950,7 @@ This is a lengthy operation so the results are cached to
   :after-creation
   (lambda (dir)
     (message "Configuring SBT and ENSIME...")
-    (skeletor-async-shell-command dir "sbt ensime")))
+    (skeletor-async-shell-command dir "sbt gen-ensime")))
 
 (provide 'skeletor)
 

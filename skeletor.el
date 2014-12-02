@@ -39,6 +39,7 @@
 (require 's)
 (require 'f)
 (require 'cl-lib)
+(require 'rx)
 (autoload 'insert-button "button")
 (autoload 'comint-mode "comint")
 
@@ -150,6 +151,19 @@ main = undefined
 The format string should have one `%s' specfier, which is
 replaced with the module name."
   :group 'skeletor-haskell
+  :type 'string)
+
+(defgroup skeletor-scala nil
+  "Configuration for Scala projects in Skeletor."
+  :group 'tools
+  :prefix "skeletor-scala-")
+
+(defcustom skeletor-scala-version nil
+  "The version of Scala to use when generating SBT configuration files.
+
+If this is nil, Skeletor will shell out to the Scala executable
+to obtain its version."
+  :group 'skeletor-scala
   :type 'string)
 
 ;;; -------------------------- Public Utilities --------------------------------
@@ -912,6 +926,21 @@ This is a lengthy operation so the results are cached to
       (skeletor-shell-command project-dir (format "lein new %s %s"
                                                   (shell-quote-argument type)
                                                   (shell-quote-argument name))))))
+
+(defun skeletor--scala-version ()
+  "Get the version of the installed scala executable."
+  (or skeletor-scala-version
+      (cadr (s-match (rx (+ (not (any digit))) (group (+ (any digit "."))))
+                     (shell-command-to-string "scala -version")))))
+
+(skeletor-define-template "scala-project"
+  :title "Scala Project"
+  :requires-executables '(("scala" . "http://www.scala-lang.org")
+                          ("sbt" . "http://www.scala-sbt.org"))
+  :substitutions '(("__SCALA-VERSION__" . skeletor--scala-version))
+  :after-creation
+  (lambda (dir)
+    (skeletor-async-shell-command dir "sbt ensime")))
 
 (provide 'skeletor)
 

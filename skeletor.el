@@ -932,7 +932,7 @@ This is a lengthy operation so the results are cached to
                                                   (shell-quote-argument type)
                                                   (shell-quote-argument name))))))
 
-(defun skeletor--scala-version ()
+(defun skeletor-scala--version ()
   "Get the version of the installed scala executable."
   (or skeletor-scala-version
       (progn
@@ -946,7 +946,7 @@ This is a lengthy operation so the results are cached to
   :title "Scala Project"
   :requires-executables '(("scala" . "http://www.scala-lang.org")
                           ("sbt" . "http://www.scala-sbt.org"))
-  :substitutions '(("__SCALA-VERSION__" . skeletor--scala-version))
+  :substitutions '(("__SCALA-VERSION__" . skeletor-scala--version))
   :after-creation
   (lambda (dir)
     (message "Configuring SBT and ENSIME...")

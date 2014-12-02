@@ -1,6 +1,4 @@
-# <img align="right" src="assets/skeletor.jpg">
-skeletor.el
-
+# skeletor.el <img align="right" src="assets/skeletor.jpg">
 [![Build Status](https://travis-ci.org/chrisbarrett/skeletor.el.png?branch=master)](https://travis-ci.org/chrisbarrett/skeletor.el)
 [![MELPA](http://melpa.org/packages/skeletor-badge.svg)](http://melpa.org/#/skeletor)
 

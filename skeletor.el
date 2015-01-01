@@ -233,7 +233,7 @@ template declaration."
               (setq skeletor--interactive-process nil)
               (when (s-matches? "finished" str)
                 (kill-buffer (process-buffer proc))
-                (funcall ,callback)
+                (funcall #',callback)
                 (run-hook-with-args 'skeletor-shell-setup-finished-hook ,dir))))
           (switch-to-buffer bufname)
           (comint-mode))
@@ -965,7 +965,8 @@ SRC-DIR is the path to the project src directory."
   :no-license? t
   :initialise
   (lambda (name project-dir)
-    (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument name))))
+    (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument name))
+                            project-dir))
   :before-git
   (lambda (dir)
     (when (and (executable-find "rspec")
@@ -1001,7 +1002,8 @@ This is a lengthy operation so the results are cached to
                          "Template: " (skeletor-clj--project-types) nil t "default")))
       (skeletor-shell-command (format "lein new %s %s"
                                       (shell-quote-argument type)
-                                      (shell-quote-argument name))))))
+                                      (shell-quote-argument name))
+                              project-dir))))
 
 (defun skeletor-scala--version ()
   "Get the version of the installed scala executable."

@@ -187,7 +187,7 @@ configure the development environment:
   ; ...
   :after-creation
   (lambda (dir)
-    (skeletor-async-shell-command dir "make env")))
+    (skeletor-async-shell-command "make env")))
 #+end_src
 
 You can do anything you want in the =after-creation= command, but it is a good
@@ -207,7 +207,7 @@ special buffers and assert that their shell commands were successful.
   ; ...
   :after-creation
   (lambda (dir)
-    (skeletor-async-shell-command dir "make env")))
+    (skeletor-async-shell-command "make env")))
 #+end_src
 
 Because such external tools may not be installed on every system, Skeletor
@@ -340,14 +340,13 @@ Ruby projects. Skeletor provides the following binding:
 
   :initialise
   (lambda (name project-dir)
-    (skeletor-shell-command
-     project-dir (format "bundle gem %s" (shell-quote-argument name))))
+    (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument name))))
 
   :after-creation
   (lambda (dir)
     (when (and (executable-find "rspec")
                (y-or-n-p "Create RSpec test suite? "))
-      (skeletor-shell-command dir "rspec --init"))))
+      (skeletor-shell-command "rspec --init"))))
 #+end_src
 
 Skeletor will use =bundle= to create the project structure, offer to create an

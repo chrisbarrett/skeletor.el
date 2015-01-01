@@ -8,26 +8,28 @@ parts of setting up a new project like version control, licenses and tooling.
 Skeletor comes with a number of predefined templates and allows you to
 easily create your own.
 
-## Table of Contents ##
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc/generate-toc again -->
+**Table of Contents**
 
-- [Supported Project Types](#user-content-supported-project-types)
-- [Installation](#user-content-installation)
-    - [MELPA Installation](#user-content-melpa-installation)
-    - [Manual installation](#user-content-manual-installation)
-- [Usage](#user-content-usage)
-- [Extending](#user-content-extending)
-    - [Project Skeletons](#user-content-project-skeletons)
-        - [Creating a Skeleton Directory](#user-content-creating-a-skeleton-directory)
-        - [Configuring the Skeleton](#user-content-configuring-the-skeleton)
-    - [Substitutions](#user-content-substitutions)
-        - [Introduction](#user-content-introduction)
-        - [Specifying Substitutions](#user-content-specifying-substitutions)
-        - [Embedded Elisp](#user-content-embedded-elisp)
-    - [External Tools](#user-content-external-tools)
-- [Contributing](#user-content-contributing)
-- [Acknowledgements](#user-content-acknowledgements)
-- [License](#user-content-license)
+- [Supported Project Types](#supported-project-types)
+- [Installation](#installation)
+    - [MELPA Installation](#melpa-installation)
+    - [Manual installation](#manual-installation)
+- [Usage](#usage)
+- [Extending](#extending)
+    - [Project Skeletons](#project-skeletons)
+        - [Creating a Skeleton Directory](#creating-a-skeleton-directory)
+        - [Configuring the Skeleton](#configuring-the-skeleton)
+    - [Substitutions](#substitutions)
+        - [Introduction](#introduction)
+        - [Specifying Substitutions](#specifying-substitutions)
+        - [Embedded Elisp](#embedded-elisp)
+    - [External Tools](#external-tools)
+- [Contributing](#contributing)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
 
+<!-- markdown-toc end -->
 
 ## Supported Project Types ##
 
@@ -205,7 +207,7 @@ macro to configure how the project template will be created.
       ; ...
       :after-creation
       (lambda (dir)
-        (skeletor-async-shell-command dir "make env")))
+        (skeletor-async-shell-command "make env")))
     ```
 
     You can do anything you want in the `after-creation` command, but it is a good
@@ -226,7 +228,7 @@ macro to configure how the project template will be created.
       ; ...
       :after-creation
       (lambda (dir)
-        (skeletor-async-shell-command dir "make env")))
+        (skeletor-async-shell-command "make env")))
     ```
 
     Because such external tools may not be installed on every system, Skeletor
@@ -351,14 +353,13 @@ Ruby projects. Skeletor provides the following binding:
 
   :initialise
   (lambda (name project-dir)
-    (skeletor-shell-command
-     project-dir (format "bundle gem %s" (shell-quote-argument name))))
+    (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument name))))
 
   :after-creation
   (lambda (dir)
     (when (and (executable-find "rspec")
                (y-or-n-p "Create RSpec test suite? "))
-      (skeletor-shell-command dir "rspec --init"))))
+      (skeletor-shell-command "rspec --init"))))
 ```
 
 Skeletor will use `bundle` to create the project structure, offer to create an

@@ -200,13 +200,14 @@ to obtain its version."
 (defvar skeletor--interactive-process nil
   "The current interactive shell process.  See `skeletor-with-shell-setup'.")
 
-(defun skeletor-with-shell-setup (dir cmd callback)
+(cl-defun skeletor-with-shell-setup
+    (cmd callback &optional (dir skeletor--current-project-root))
   "Perform template setup using an interactive shell command.
 Display the shell buffer for user input.
 
-DIR will be used as the current directory.
-
 CMD is the shell command to call.
+
+DIR will be used as the current directory.
 
 If the command exits successfully,
 
@@ -218,7 +219,7 @@ If the command exits successfully,
 
 This is intended to be used in the 'after-setup' stage of a
 template declaration."
-  (declare (indent 2))
+  (declare (indent 1))
   (let ((bufname "*Skeletor Interactive Setup*"))
     (setq skeletor--interactive-process
           (start-process-shell-command
@@ -266,25 +267,22 @@ download instructions."
 
 (defvar-local skeletor--command-queue nil)
 
-(cl-defun skeletor--start-shell-process
-    (&key command async ((:dir default-directory)))
+(defvar skeletor--current-project-root nil)
+
+(cl-defun skeletor--start-shell-process (&key command async dir)
   "Execute the given COMMAND-SPEC in the project's shell output buffer."
-  (let ((buf (get-buffer-create (format "*Skeletor [%s]*" (f-filename dir)))))
-    (with-current-buffer buf
-      (read-only-mode +1)
-      (skeletor--maybe-insert-shell-buffer-banner dir)
-      (add-to-list 'skeletor--command-queue
-                   (list :command command :async async :dir dir)
-                   t)
-      (skeletor--execute-command-queue buf))))
+  (let ((dir (or dir skeletor--current-project-root)))
+    (with-current-buffer (skeletor--current-project-shell-buffer)
+      (add-to-list 'skeletor--command-queue (list :command command :async async :dir dir) t)
+      (skeletor--execute-command-queue (current-buffer)))))
 
 (defun skeletor--execute-command-queue (buf)
   "Execute commands enqueued for the given shell output buffer BUF."
   (with-current-buffer buf
     (when skeletor--command-queue
       (-let [(&plist :command cmd :async async :dir dir) (pop skeletor--command-queue)]
-        (skeletor--insert-shell-command-arrow cmd)
-        (let* ((default-directory dir)
+        (skeletor--insert-shell-command-arrow dir cmd)
+        (let* ((cmd (format "cd %s && %s" dir cmd))
                (proc (start-process-shell-command "skeletor" buf cmd))
                (cont (lambda (_ state)
                        (with-current-buffer buf
@@ -292,12 +290,20 @@ download instructions."
                                 (goto-char (point-max))
                                 (skeletor--execute-command-queue buf))
                                (t
-                                (skeletor--insert-error-report state)))))))
+                                (skeletor--log-error state)))))))
           (set-process-sentinel proc cont)
           (unless async
             (while (process-live-p proc)
               (sit-for 0.1)))
           (process-exit-status proc))))))
+
+(defun skeletor--current-project-shell-buffer ()
+  "Return the shell buffer for the current project, creating it if needed."
+  (let ((dir skeletor--current-project-root))
+    (with-current-buffer (get-buffer-create (format "*Skeletor [%s]*" (f-filename dir)))
+      (read-only-mode +1)
+      (skeletor--maybe-insert-shell-buffer-banner dir)
+      (current-buffer))))
 
 (defun skeletor--maybe-insert-shell-buffer-banner (dir)
   "Insert a banner for the current shell output buffer.  DIR is the project root."
@@ -307,17 +313,26 @@ download instructions."
                                   (f-short dir))
                           'face 'compilation-info)))))
 
-(defun skeletor--insert-shell-command-arrow (cmd)
+(defun skeletor--insert-shell-command-arrow (dir cmd)
   "Insert CMD into the current buffer with an arrow."
   (goto-char (point-max))
   (let ((inhibit-read-only t))
-    (insert (propertize (format "\n--> %s\n" cmd) 'face 'compilation-warning))))
+    (insert (propertize (format "\n--> [%s]: %s\n" (f-short dir) cmd)
+                        'face 'compilation-warning))))
 
-(defun skeletor--insert-error-report (msg)
-  "Insert an error message MSG into the current buffer."
-  (goto-char (point-max))
-  (let ((inhibit-read-only t))
-    (insert (propertize msg 'face 'compilation-error))))
+(defun skeletor--log-error (msg)
+  (skeletor--log (propertize msg 'face 'compilation-error)))
+
+(defun skeletor--log-info (msg)
+  (skeletor--log (propertize msg 'face 'compilation-mode-line-run)))
+
+(defun skeletor--log (msg)
+  "Display MSG and write it to the shell command buffer."
+  (with-current-buffer (skeletor--current-project-shell-buffer)
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (insert (format "\n%s\n" msg))))
+  (message (substring-no-properties msg)))
 
 (defvar skeletor--pkg-root (f-dirname (or load-file-name (buffer-file-name)))
   "The base directory of the Skeletor package.")
@@ -462,7 +477,7 @@ substitution."
 (defun skeletor--initialize-git-repo  (dir)
   "Initialise a new git repository at DIR."
   (let ((default-directory dir))
-    (message "Initialising git...")
+    (skeletor--log-info "Initialising git...")
     ;; Some tools (e.g. bundler) initialise git but do not make an initial
     ;; commit.
     (unless (f-exists? (f-join dir ".git"))
@@ -656,6 +671,8 @@ Otherwise immediately initialise git."
                                     (cons "__LICENSE-FILE-NAME__" ,license-file-name))
                               ',rs))))
 
+           (setq skeletor--current-project-root dest)
+
            ;; Instantiate the project.
 
            (-if-let (skeleton (-first 'f-exists?
@@ -775,6 +792,8 @@ This can be used to add bindings for command-line tools.
                                           project-name)
                                     (cons "__LICENSE-FILE-NAME__"
                                           ,license-file-name))))))
+
+           (setq skeletor--current-project-root dest)
 
            (unless (f-exists? skeletor-project-directory)
              (make-directory skeletor-project-directory t))
@@ -930,10 +949,10 @@ SRC-DIR is the path to the project src directory."
   :after-creation
   (lambda (dir)
     (when (skeletor-hs--cabal-sandboxes-supported?)
-      (message "Initialising sandbox...")
+      (skeletor--log-info "Initialising sandbox...")
       (skeletor-shell-command "cabal sandbox init"))
 
-    (skeletor-with-shell-setup dir "cabal init"
+    (skeletor-with-shell-setup "cabal init"
       (lambda ()
         (let ((cabal-file (car (f-entries dir (lambda (f) (equal "cabal" (f-ext f))))))
               (src-dir (f-join dir "src")))
@@ -1002,7 +1021,7 @@ This is a lengthy operation so the results are cached to
   :after-creation
   (lambda (dir)
     (when skeletor-scala-use-ensime
-      (message "Configuring SBT and ENSIME. This may take a while...")
+      (skeletor--log-info "Configuring SBT and ENSIME. This may take a while...")
       (skeletor-async-shell-command "sbt gen-ensime"))))
 
 (provide 'skeletor)

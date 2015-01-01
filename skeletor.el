@@ -672,6 +672,7 @@ Otherwise immediately initialise git."
                               ',rs))))
 
            (setq skeletor--current-project-root dest)
+           (switch-to-buffer (skeletor--current-project-shell-buffer))
 
            ;; Instantiate the project.
 
@@ -794,6 +795,7 @@ This can be used to add bindings for command-line tools.
                                           ,license-file-name))))))
 
            (setq skeletor--current-project-root dest)
+           (switch-to-buffer (skeletor--current-project-shell-buffer))
 
            (unless (f-exists? skeletor-project-directory)
              (make-directory skeletor-project-directory t))

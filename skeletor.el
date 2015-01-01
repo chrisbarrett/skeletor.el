@@ -461,14 +461,15 @@ substitution."
 ;; FilePath -> IO ()
 (defun skeletor--initialize-git-repo  (dir)
   "Initialise a new git repository at DIR."
-  (message "Initialising git...")
-  ;; Some tools (e.g. bundler) initialise git but do not make an initial
-  ;; commit.
-  (unless (f-exists? (f-join dir ".git"))
-    (skeletor-shell-command "git init"))
-  (skeletor-shell-command "git commit --allow-empty -m 'Initial commit'")
-  (skeletor-shell-command "git add -A && git commit -m 'Add initial files'")
-  (message "Initialising git...done"))
+  (let ((default-directory dir))
+    (message "Initialising git...")
+    ;; Some tools (e.g. bundler) initialise git but do not make an initial
+    ;; commit.
+    (unless (f-exists? (f-join dir ".git"))
+      (skeletor-shell-command "git init"))
+    (skeletor-shell-command "git commit --allow-empty -m 'Initial commit'")
+    (skeletor-shell-command "git add -A && git commit -m 'Add initial files'")
+    (message "Initialising git...done")))
 
 ;; FilePath, FilePath, [(String,String)] -> IO ()
 (defun skeletor--instantiate-license-file (license-file dest substitutions)
@@ -484,22 +485,24 @@ substitution."
 ;; FilePath -> IO ()
 (defun skeletor--show-project (dest)
   "Reveal the new project at DEST by calling `skeletor-show-project-command'."
-  (when skeletor-show-project-command
-    (if skeletor--interactive-process
-        (add-hook 'skeletor-shell-setup-finished-hook
-                  skeletor-show-project-command)
-      (funcall skeletor-show-project-command dest))))
+  (let ((default-directory dest))
+    (when skeletor-show-project-command
+      (if skeletor--interactive-process
+          (add-hook 'skeletor-shell-setup-finished-hook
+                    skeletor-show-project-command)
+        (funcall skeletor-show-project-command dest)))))
 
 ;; FilePath -> IO ()
 (defun skeletor--prepare-git (dest)
   "Configure a git repo at DEST at an appropriate stage in the setup.
 If there is an interactive process, wait until that is finished.
 Otherwise immediately initialise git."
-  (when skeletor-init-with-git
-    (if skeletor--interactive-process
-        (add-hook 'skeletor-shell-setup-finished-hook
-                  'skeletor--initialize-git-repo)
-      (skeletor--initialize-git-repo dest))))
+  (let ((default-directory dest))
+    (when skeletor-init-with-git
+      (if skeletor--interactive-process
+          (add-hook 'skeletor-shell-setup-finished-hook
+                    'skeletor--initialize-git-repo)
+        (skeletor--initialize-git-repo dest)))))
 
 ;;; ---------------------- User Interface Commands -----------------------------
 
@@ -570,6 +573,7 @@ Otherwise immediately initialise git."
                                        &key
                                        title
                                        substitutions
+                                       (before-git 'ignore)
                                        (after-creation 'ignore)
                                        no-license?
                                        default-license
@@ -610,6 +614,7 @@ Otherwise immediately initialise git."
   (cl-assert (stringp name) t)
   (cl-assert (or (null title) (stringp title)) t)
   (cl-assert (stringp license-file-name) t)
+  (cl-assert (functionp before-git) t)
   (cl-assert (functionp after-creation) t)
   (let ((constructor (intern (format "skeletor--create-%s" name)))
         (title (or title (s-join " " (-map 's-capitalize (s-split-words name)))))
@@ -667,8 +672,9 @@ Otherwise immediately initialise git."
 
              (error "Skeleton %s not found" ,name))
 
-           (funcall #',after-creation dest)
+           (funcall #',before-git dest)
            (skeletor--prepare-git dest)
+           (funcall #',after-creation dest)
            (run-hook-with-args 'skeletor-after-project-instantiated-hook dest)
            (skeletor--show-project dest)
            (message "Project created at %s" dest)))
@@ -680,6 +686,7 @@ Otherwise immediately initialise git."
 (cl-defmacro skeletor-define-constructor (title
                                           &key
                                           initialise
+                                          (before-git 'ignore)
                                           (after-creation 'ignore)
                                           no-git?
                                           no-license?
@@ -701,6 +708,10 @@ This can be used to add bindings for command-line tools.
 
   Make sure to switch to a shell buffer if INITIALISE is a shell
   command that requires user interaction.
+
+* BEFORE-GIT is a unary function to be run once the project is
+  created, but before git is initialised. It should take a single
+  argument--the path to the newly-created project.
 
 * AFTER-CREATION is a unary function to be run once the project
   is created. It should take a single argument--the path to the
@@ -771,12 +782,13 @@ This can be used to add bindings for command-line tools.
            (cl-assert (f-exists? dest) t
                       "Initialisation function failed to create project at %s")
 
-           (funcall #',after-creation dest)
+           (funcall #',before-git dest)
            (when license-file
              (skeletor--instantiate-license-file
               license-file (f-join dest ,license-file-name) repls))
            (unless ,no-git?
              (skeletor--prepare-git dest))
+           (funcall #',after-creation dest)
            (run-hook-with-args 'skeletor-after-project-instantiated-hook dest)
            (skeletor--show-project dest)
            (message "Project created at %s" dest)))
@@ -845,7 +857,7 @@ SKELETON is a SkeletorProjectType."
   :substitutions '(("__PYTHON-BIN__" . skeletor-py--read-python-bin))
   :after-creation
   (lambda (dir)
-    (skeletor-async-shell-command dir "make tooling")))
+    (skeletor-async-shell-command "make tooling")))
 
 (defun skeletor-hs--cabal-sandboxes-supported? ()
   "Non-nil if the installed cabal version supports sandboxes.
@@ -935,7 +947,7 @@ SRC-DIR is the path to the project src directory."
   :initialise
   (lambda (name project-dir)
     (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument name))))
-  :after-creation
+  :before-git
   (lambda (dir)
     (when (and (executable-find "rspec")
                (y-or-n-p "Create RSpec test suite? "))
@@ -991,7 +1003,7 @@ This is a lengthy operation so the results are cached to
   (lambda (dir)
     (when skeletor-scala-use-ensime
       (message "Configuring SBT and ENSIME. This may take a while...")
-      (skeletor-async-shell-command dir "sbt gen-ensime"))))
+      (skeletor-async-shell-command "sbt gen-ensime"))))
 
 (provide 'skeletor)
 

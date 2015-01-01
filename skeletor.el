@@ -45,6 +45,7 @@
 (require 'f)
 (require 'cl-lib)
 (require 'rx)
+(require 'compile)
 (autoload 'insert-button "button")
 (autoload 'comint-mode "comint")
 
@@ -178,41 +179,23 @@ to obtain its version."
 
 ;;; -------------------------- Public Utilities --------------------------------
 
-(defun skeletor-shell-command (dir command &optional no-assert)
-  "Run a shell command and return its exit status.
-
-* DIR is an unquoted path at which to run the command.
+(defun skeletor-shell-command (command &optional dir)
+  "Enque a shell command for this project, raising an error on a non-zero exit code.
 
 * COMMAND is the shell command to execute.
 
-* An error will be raised on a non-zero result, unless NO-ASSERT
-  is t."
-  (let ((buf (get-buffer-create (format "*Skeletor [%s]*" (f-filename dir)))))
-    (with-current-buffer buf
-      (erase-buffer))
-    (let ((result (shell-command (format "cd %s && %s" (shell-quote-argument dir) command)
-                                 buf
-                                 (format "*Skeletor Errors [%s]*" (f-filename dir)))))
-      (unless no-assert
-        (cl-assert (zerop result) nil
-                   "Skeleton creation failed--see the output buffer for details"))
-      result)))
+* DIR is an unquoted path at which to run the command."
+  (let ((code (skeletor--start-shell-process :command command :dir dir :async nil)))
+    (cl-assert (zerop code) nil
+               "Skeleton creation failed--see the output buffer for details")))
 
-(defun skeletor-async-shell-command (dir command)
-  "Run an async shell command.
+(defun skeletor-async-shell-command (command &optional dir)
+  "Enqueue and an async shell command for this project.
 
-* DIR is an unquoted path at which to run the command.
+* COMMAND is the shell command to execute.
 
-* COMMAND is the shell command to execute."
-  (let ((buf (get-buffer-create
-              (generate-new-buffer-name
-               (format "*Skeletor [%s]*" (f-filename dir))))))
-    (with-current-buffer buf
-      (erase-buffer))
-    (async-shell-command
-     (format "cd %s && %s" (shell-quote-argument dir) command)
-     buf
-     (format "*Skeletor Errors [%s]*" (f-filename dir)))))
+* DIR is an unquoted path at which to run the command."
+  (skeletor--start-shell-process :command command :dir dir :async t))
 
 (defvar skeletor--interactive-process nil
   "The current interactive shell process.  See `skeletor-with-shell-setup'.")
@@ -280,6 +263,61 @@ download instructions."
     (user-error "Cannot find executable(s) needed to create project")))
 
 ;;; ----------------------------- Internal -------------------------------------
+
+(defvar-local skeletor--command-queue nil)
+
+(cl-defun skeletor--start-shell-process
+    (&key command async ((:dir default-directory)))
+  "Execute the given COMMAND-SPEC in the project's shell output buffer."
+  (let ((buf (get-buffer-create (format "*Skeletor [%s]*" (f-filename dir)))))
+    (with-current-buffer buf
+      (read-only-mode +1)
+      (skeletor--maybe-insert-shell-buffer-banner dir)
+      (add-to-list 'skeletor--command-queue
+                   (list :command command :async async :dir dir)
+                   t)
+      (skeletor--execute-command-queue buf))))
+
+(defun skeletor--execute-command-queue (buf)
+  "Execute commands enqueued for the given shell output buffer BUF."
+  (with-current-buffer buf
+    (when skeletor--command-queue
+      (-let [(&plist :command cmd :async async :dir dir) (pop skeletor--command-queue)]
+        (skeletor--insert-shell-command-arrow cmd)
+        (let* ((default-directory dir)
+               (proc (start-process-shell-command "skeletor" buf cmd))
+               (cont (lambda (_ state)
+                       (with-current-buffer buf
+                         (cond ((s-matches? "finished" state)
+                                (goto-char (point-max))
+                                (skeletor--execute-command-queue buf))
+                               (t
+                                (skeletor--insert-error-report state)))))))
+          (set-process-sentinel proc cont)
+          (unless async
+            (while (process-live-p proc)
+              (sit-for 0.1)))
+          (process-exit-status proc))))))
+
+(defun skeletor--maybe-insert-shell-buffer-banner (dir)
+  "Insert a banner for the current shell output buffer.  DIR is the project root."
+  (when (s-blank? (buffer-string))
+    (let ((inhibit-read-only t))
+      (insert (propertize (format "Skeletor setup commands for project at %s\n"
+                                  (f-short dir))
+                          'face 'compilation-info)))))
+
+(defun skeletor--insert-shell-command-arrow (cmd)
+  "Insert CMD into the current buffer with an arrow."
+  (goto-char (point-max))
+  (let ((inhibit-read-only t))
+    (insert (propertize (format "\n--> %s\n" cmd) 'face 'compilation-warning))))
+
+(defun skeletor--insert-error-report (msg)
+  "Insert an error message MSG into the current buffer."
+  (goto-char (point-max))
+  (let ((inhibit-read-only t))
+    (insert (propertize msg 'face 'compilation-error))))
 
 (defvar skeletor--pkg-root (f-dirname (or load-file-name (buffer-file-name)))
   "The base directory of the Skeletor package.")
@@ -350,8 +388,8 @@ Return a SkeletorExpansionSpec.
   (cl-flet ((expand (it)
                     (->> (skeletor--replace-all (cons (cons "__DOT__" ".") substitutions)
                                                 it)
-                      (s-chop-prefix (SkeletorTemplate-path template))
-                      (s-prepend (s-chop-suffix (f-path-separator) dest)))))
+                         (s-chop-prefix (SkeletorTemplate-path template))
+                         (s-prepend (s-chop-suffix (f-path-separator) dest)))))
     (SkeletorExpansionSpec
      (--map (cons it (expand it)) (SkeletorTemplate-files template))
      (--map (cons it (expand it)) (SkeletorTemplate-dirs template)))))
@@ -417,8 +455,8 @@ substitution."
   (cl-assert (stringp dest))
   (make-directory dest t)
   (->> (skeletor--dir->SkeletorTemplate src)
-    (skeletor--expand-template-paths substitutions dest)
-    (skeletor--instantiate-spec substitutions)))
+       (skeletor--expand-template-paths substitutions dest)
+       (skeletor--instantiate-spec substitutions)))
 
 ;; FilePath -> IO ()
 (defun skeletor--initialize-git-repo  (dir)
@@ -427,11 +465,9 @@ substitution."
   ;; Some tools (e.g. bundler) initialise git but do not make an initial
   ;; commit.
   (unless (f-exists? (f-join dir ".git"))
-    (skeletor-shell-command dir "git init"))
-  (skeletor-shell-command
-   dir "git commit --allow-empty -m 'Initial commit'")
-  (skeletor-shell-command
-   dir "git add -A && git commit -m 'Add initial files'")
+    (skeletor-shell-command "git init"))
+  (skeletor-shell-command "git commit --allow-empty -m 'Initial commit'")
+  (skeletor-shell-command "git add -A && git commit -m 'Add initial files'")
   (message "Initialising git...done"))
 
 ;; FilePath, FilePath, [(String,String)] -> IO ()
@@ -506,8 +542,8 @@ Otherwise immediately initialise git."
   (let ((title
          (completing-read "Skeleton: "
                           (->> skeletor--project-types
-                            (-map 'SkeletorProjectType-title)
-                            (-sort 'string<))
+                               (-map 'SkeletorProjectType-title)
+                               (-sort 'string<))
                           nil t)))
 
     (--first (equal title (SkeletorProjectType-title it))
@@ -796,11 +832,11 @@ SKELETON is a SkeletorProjectType."
 (defun skeletor-py--read-python-bin ()
   "Read a python binary from the user."
   (->> skeletor-python-bin-search-path
-    (--mapcat
-     (f-files it (lambda (f)
-                   (s-matches? (rx "python" (* (any digit "." "-")) eol)
-                               f))))
-    (funcall skeletor-completing-read-function "Python binary: ")))
+       (--mapcat
+        (f-files it (lambda (f)
+                      (s-matches? (rx "python" (* (any digit "." "-")) eol)
+                                  f))))
+       (funcall skeletor-completing-read-function "Python binary: ")))
 
 (skeletor-define-template "python-library"
   :title "Python Library"
@@ -815,10 +851,10 @@ SKELETON is a SkeletorProjectType."
   "Non-nil if the installed cabal version supports sandboxes.
 Sandboxes were introduced in cabal 1.18 ."
   (let ((vers (->> (shell-command-to-string "cabal --version")
-                (s-match (rx (+ (any num "."))))
-                car
-                (s-split (rx "."))
-                (-map 'string-to-int))))
+                   (s-match (rx (+ (any num "."))))
+                   car
+                   (s-split (rx "."))
+                   (-map 'string-to-int))))
     (cl-destructuring-bind (maj min &rest rest) vers
       (or (< 1 maj) (<= 18 min)))))
 
@@ -862,9 +898,9 @@ SRC-DIR is the path to the project src directory."
           (if executable?
               "Main"
             (->> (f-base (f-parent cabal-file))
-              s-split-words
-              (-map 's-capitalize)
-              (s-join ""))))
+                 s-split-words
+                 (-map 's-capitalize)
+                 (s-join ""))))
          (path
           (f-join src-dir
                   (if executable? "Main.hs" (concat module-name ".hs"))))
@@ -883,7 +919,7 @@ SRC-DIR is the path to the project src directory."
   (lambda (dir)
     (when (skeletor-hs--cabal-sandboxes-supported?)
       (message "Initialising sandbox...")
-      (skeletor-shell-command dir "cabal sandbox init"))
+      (skeletor-shell-command "cabal sandbox init"))
 
     (skeletor-with-shell-setup dir "cabal init"
       (lambda ()
@@ -898,13 +934,12 @@ SRC-DIR is the path to the project src directory."
   :no-license? t
   :initialise
   (lambda (name project-dir)
-    (skeletor-shell-command
-     project-dir (format "bundle gem %s" (shell-quote-argument name))))
+    (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument name))))
   :after-creation
   (lambda (dir)
     (when (and (executable-find "rspec")
                (y-or-n-p "Create RSpec test suite? "))
-      (skeletor-shell-command dir "rspec --init"))))
+      (skeletor-shell-command "rspec --init"))))
 
 (defvar skeletor-clj--project-types-cache nil
   "A list of strings representing the available Leiningen templates.")
@@ -917,12 +952,12 @@ This is a lengthy operation so the results are cached to
 `skeletor-clj--project-types-cache'."
   (or skeletor-clj--project-types-cache
       (let ((types (->> (shell-command-to-string "lein help new")
-                     (s-match
-                      (rx bol "Subtasks available:\n" (group (+? anything)) "\n\n"))
-                     cadr
-                     (s-split "\n")
-                     (--keep (cadr (s-match (rx bol (* space) (group (+ (not space))))
-                                            it))))))
+                        (s-match
+                         (rx bol "Subtasks available:\n" (group (+? anything)) "\n\n"))
+                        cadr
+                        (s-split "\n")
+                        (--keep (cadr (s-match (rx bol (* space) (group (+ (not space))))
+                                               it))))))
         (prog1 types
           (setq skeletor-clj--project-types-cache types)))))
 
@@ -933,9 +968,9 @@ This is a lengthy operation so the results are cached to
     (message "Finding Leningen templates...")
     (let ((type (funcall skeletor-completing-read-function
                          "Template: " (skeletor-clj--project-types) nil t "default")))
-      (skeletor-shell-command project-dir (format "lein new %s %s"
-                                                  (shell-quote-argument type)
-                                                  (shell-quote-argument name))))))
+      (skeletor-shell-command (format "lein new %s %s"
+                                      (shell-quote-argument type)
+                                      (shell-quote-argument name))))))
 
 (defun skeletor-scala--version ()
   "Get the version of the installed scala executable."
@@ -955,7 +990,7 @@ This is a lengthy operation so the results are cached to
   :after-creation
   (lambda (dir)
     (when skeletor-scala-use-ensime
-      (message "Configuring SBT and ENSIME...")
+      (message "Configuring SBT and ENSIME. This may take a while...")
       (skeletor-async-shell-command dir "sbt gen-ensime"))))
 
 (provide 'skeletor)

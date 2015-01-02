@@ -220,22 +220,22 @@ If the command exits successfully,
 
 This is intended to be used in the 'after-setup' stage of a
 template declaration."
-  (declare (indent 1))
   (let ((bufname "*Skeletor Interactive Setup*"))
     (setq skeletor--interactive-process
           (start-process-shell-command
            "skeletorcmd" bufname
            (format "cd %s && %s" dir cmd)))
     (condition-case nil
-        (progn
-          (set-process-sentinel
-           skeletor--interactive-process
-           `(lambda (proc str)
-              (setq skeletor--interactive-process nil)
-              (when (s-matches? "finished" str)
-                (kill-buffer (process-buffer proc))
-                (funcall #',callback)
-                (run-hook-with-args 'skeletor-shell-setup-finished-hook ,dir))))
+        (let ((sentinel (lambda (proc state)
+                          (setq skeletor--interactive-process nil)
+                          (cond ((s-matches? "finished" state)
+                                 (kill-buffer (process-buffer proc))
+                                 (funcall callback)
+                                 (skeletor--log-info "Interactive setup finished")
+                                 (run-hook-with-args 'skeletor-shell-setup-finished-hook dir))
+                                (t
+                                 (skeletor--log-error state))))))
+          (set-process-sentinel skeletor--interactive-process sentinel)
           (switch-to-buffer bufname)
           (comint-mode))
       (error
@@ -521,11 +521,9 @@ substitution."
 If there is an interactive process, wait until that is finished.
 Otherwise immediately initialise git."
   (let ((default-directory dest))
-    (when skeletor-init-with-git
-      (if skeletor--interactive-process
-          (add-hook 'skeletor-shell-setup-finished-hook
-                    'skeletor--initialize-git-repo)
-        (skeletor--initialize-git-repo dest)))))
+    (if skeletor--interactive-process
+        (add-hook 'skeletor-shell-setup-finished-hook 'skeletor--initialize-git-repo)
+      (skeletor--initialize-git-repo dest))))
 
 ;;; ---------------------- User Interface Commands -----------------------------
 
@@ -627,146 +625,41 @@ Otherwise immediately initialise git."
 
 \(fn NAME &key TITLE SUBSTITUTIONS BEFORE-GIT AFTER-CREATION NO-LICENSE? DEFAULT-LICENSE LICENSE-FILE-NAME REQUIRES-EXECUTABLES)"
   (declare (indent 1))
-  (-let* ((spec-alist (skeletor--process-macro-args args))
-          ((&alist 'default-license-var default-license-var
-                   'default-license     default-license
-                   'constructor         ctor
-                   'name                name
-                   'title               title)
-           spec-alist))
-    `(progn
-       (defvar ,default-license-var ,default-license
-         ,(skeletor--gen-license-var-docstring name))
-       (setq ,default-license-var ,default-license)
-
-       (defun ,ctor()
-         ,(skeletor--gen-ctor-docstring name)
-         (skeletor--run-ctor (skeletor--ctor-runtime-spec ',spec-alist)))
-
-       (add-to-list 'skeletor--project-types
-                    (SkeletorProjectType ,(or title name) ',ctor)))))
-
-(defun skeletor--process-macro-args (args)
-  "Check ARGS are well-formed, then process them into an alist."
-  (-let* (((name . keys) args)
-          (arg-alist (skeletor--plist-to-alist keys)))
-    (skeletor--validate-macro-arguments name arg-alist)
-    (let-alist arg-alist
-      (list (cons 'constructor (intern (format "skeletor--create-%s" name)))
-            (cons 'title (or .title (s-join " " (-map 's-capitalize (s-split-words name)))))
-            (cons 'name name)
-            (cons 'before-git (or .before-git 'ignore))
-            (cons 'after-creation (or .after-creation 'ignore))
-            (cons 'create-license? (not .no-license?))
-            (cons 'license-file-name (or .license-file-name "COPYING"))
-            (cons 'default-license-var (intern (format "%s-default-license" name)))
-            (cons 'substitutions (eval .substitutions))
-            (cons 'requires-executables (eval .requires-executables))))))
-
-(defun skeletor--plist-to-alist (plist)
-  "Convert PLIST to an alist, replacing keyword keys with symbols."
-  (->> (-partition-in-steps 2 2 plist)
-       (-map (-lambda ((k v))
-               (cons (intern (s-chop-prefix ":" (symbol-name k)))
-                     v)))))
-
-(defun skeletor--validate-macro-arguments (name args)
-  (let-alist args
-    (cl-assert (stringp name) t)
-    (cl-assert (or (null .title) (stringp .title)) t)
-    (cl-assert (or (null .license-file-name) (stringp .license-file-name)) t)
-    (cl-assert (or (null .before-git) (functionp .before-git)) t)
-    (cl-assert (or (null .after-creation) (functionp .after-creation)) t)
-    (let ((execs (eval .requires-executables)))
-      (cl-assert (listp execs) t)
-      (cl-assert (skeletor--alist-all-keys-are-strings? execs) t)
-      (cl-assert (skeletor--alist-all-values-are-strings? execs) t))
-    (let ((subs (eval .substitutions)))
-      (cl-assert (listp subs) t)
-      (cl-assert (skeletor--alist-all-keys-are-strings? subs) t))))
-
-(defun skeletor--alist-all-keys-are-strings? (alist)   (-all? 'stringp (-map 'car alist)))
-(defun skeletor--alist-all-values-are-strings? (alist) (-all? 'stringp (-map 'cdr alist)))
-
-(defun skeletor--ctor-runtime-spec (spec)
-  "Concatenate the given macro SPEC with values evaluated at runtime."
-  (let ((project-name (skeletor--read-project-name)))
-    (let-alist spec
-      (-concat (list
-                (cons 'project-name project-name)
-                (cons 'dest (f-join skeletor-project-directory project-name))
-                (cons 'license-file
-                      (when .create-license?
-                        (skeletor--read-license "License: " .license-file-name)))
-                (cons 'repls (-map 'skeletor--eval-substitution
-                                   (-concat
-                                    skeletor-global-substitutions
-                                    (list (cons "__PROJECT-NAME__" project-name)
-                                          (cons "__LICENSE-FILE-NAME__" .license-file-name))
-                                    .substitutions))))
-               spec))))
-
-(defun skeletor--run-ctor (runtime-spec)
-  (let-alist runtime-spec
-    (let ((default-directory .dest))
-      (skeletor-require-executables .exec-alist)
-      (setq skeletor--current-project-root .dest)
-      (-if-let (skeleton (skeletor--get-named-skeleton .name))
-          (skeletor--ctor-instantiate-project runtime-spec skeleton)
-        (error "Skeleton %s not found" .name))
-      (skeletor--log-info "Project created at %s" .dest)
-      (skeletor--ctor-run-setup-steps runtime-spec)
-      (skeletor--show-project .dest))))
-
-(defun skeletor--ctor-instantiate-project (spec skeleton)
-  (let-alist spec
-    (unless (f-exists? skeletor-project-directory)
-      (make-directory skeletor-project-directory t))
-    (skeletor--instantiate-skeleton-dir .repls skeleton .dest)
-    (when .license-file
-      (skeletor--instantiate-license-file
-       .license-file (f-join .dest .license-file-name) .repls))))
-
-(defun skeletor--get-named-skeleton (name)
-  (-first 'f-exists?
-          (list (f-expand name skeletor-user-directory)
-                (f-expand name skeletor--directory))))
-
-(defun skeletor--ctor-run-setup-steps (runtime-spec)
-  (switch-to-buffer (skeletor--current-project-shell-buffer))
-  (let-alist runtime-spec
-    (funcall .before-git .dest)
-    (skeletor--prepare-git .dest)
-    (skeletor--log-info "Git initialised")
-    (funcall .after-creation .dest)
-    (run-hook-with-args 'skeletor-after-project-instantiated-hook .dest)))
+  (-let [(name . keys) args]
+    `(skeletor-define-constructor ,name
+       :initialise skeletor--ctor-skeleton-initialisation-fn
+       ,@keys)))
 
 ;;;###autoload
-(cl-defmacro skeletor-define-constructor (title
-                                          &key
-                                          initialise
-                                          (before-git 'ignore)
-                                          (after-creation 'ignore)
-                                          no-git?
-                                          no-license?
-                                          default-license
-                                          (license-file-name "COPYING")
-                                          requires-executables)
+(defmacro skeletor-define-constructor (&rest args)
   "Define a new project type with a custom way of constructing a skeleton.
 This can be used to add bindings for command-line tools.
 
 * TITLE is a string naming the project type in the UI.
 
-* INITIALISE is a binary function that creates the project
-  structure. It will be passed a name for the project, read from
-  the user, and the current value of `skeletor-project-directory'.
+* INITIALISE is a unary function that creates the project
+  structure. It will be passed an alist containing a
+  specification for the skeleton, including the following keys:
 
-  INITIALISE is expected to initialise the new project at
-  skeletor-project-directory/NAME. The command should signal an error
-  if this fails for any reason.
+  - `project-name': The name of the project read from the user
+  - `project-dir': The directory at which the project should be created
+  - `dest': The project-directory joined with the project name.
+
+  Consider using `let-alist' to conveniently bind these variables
+  to `.project-name', `.project-dir' and `.dest' in the scope of
+  your initialisation function.
+
+  INITIALISE is expected to initialise the new project at `dest'.
+  The command should signal an error if this fails for any
+  reason.
 
   Make sure to switch to a shell buffer if INITIALISE is a shell
   command that requires user interaction.
+
+* SUBSTITUTIONS is an alist of (string . substitution) specifying
+  substitutions to be used, in addition to the global
+  substitutions defined in `skeletor-global-substitutions'. These
+  are evaluated when creating an instance of the template.
 
 * BEFORE-GIT is a unary function to be run once the project is
   created, but before git is initialised. It should take a single
@@ -791,69 +684,153 @@ This can be used to add bindings for command-line tools.
 
 * REQUIRES-EXECUTABLES is an alist of `(PROGRAM . URL)'
   expressing programs needed to expand this skeleton. See
-  `skeletor-require-executables'."
+  `skeletor-require-executables'.
+
+\(fn TITLE &key INITIALISE SUBSTITUTIONS BEFORE-GIT AFTER-CREATION NO-GIT? NO-LICENSE? DEFAULT-LICENSE LICENSE-FILE-NAME REQUIRES-EXECUTABLES)"
   (declare (indent 1))
-  (cl-assert (stringp title) t)
-  (cl-assert (stringp license-file-name) t)
-  (cl-assert (functionp initialise) t)
-  (cl-assert (functionp after-creation) t)
-  (let* ((project-symbol-name (s-replace " " "-" (s-downcase title)))
-         (constructor (intern (concat "skeletor--create-" project-symbol-name)))
-         (default-license-var (intern
-                               (concat project-symbol-name "-default-license")))
-         (exec-alist (eval requires-executables)))
-    (cl-assert (listp requires-executables) t)
-    (cl-assert (-all? 'stringp (-map 'car exec-alist)) t)
-    (cl-assert (-all? 'stringp (-map 'cdr exec-alist)) t)
-
+  (-let* ((spec-alist (skeletor--process-macro-args args))
+          ((&alist 'default-license-var default-license-var
+                   'default-license     default-license
+                   'constructor-fname   ctor
+                   'name                name
+                   'title               title)
+           spec-alist))
     `(progn
-
        (defvar ,default-license-var ,default-license
-         ,(skeletor--gen-license-var-docstring title))
-       ;; Update the variable if the definition is re-evaluated.
+         ,(skeletor--gen-license-var-docstring name))
        (setq ,default-license-var ,default-license)
 
+       (defun ,ctor()
+         ,(skeletor--gen-ctor-docstring name)
+         (skeletor--run-ctor (skeletor--ctor-runtime-spec ',spec-alist)))
 
-       (defun ,constructor ()
-         ;; Docstring
-         ,(skeletor--gen-ctor-docstring title)
-         ;; Body
-         (skeletor-require-executables ',exec-alist)
-         (let* ((project-name (skeletor--read-project-name))
-                (license-file
-                 (unless ,no-license?
-                   (skeletor--read-license "License: " (eval ,default-license-var))))
-                (dest (f-join skeletor-project-directory project-name))
-                (default-directory dest)
-                (repls (-map 'skeletor--eval-substitution
-                             (-concat
-                              skeletor-global-substitutions
-                              (list (cons "__PROJECT-NAME__"
-                                          project-name)
-                                    (cons "__LICENSE-FILE-NAME__"
-                                          ,license-file-name))))))
+       (add-to-list 'skeletor--project-types
+                    (SkeletorProjectType ,(or title name) ',ctor)))))
 
-           (setq skeletor--current-project-root dest)
-           (switch-to-buffer (skeletor--current-project-shell-buffer))
+(defun skeletor--process-macro-args (args)
+  "Check ARGS are well-formed, then process them into an alist."
+  (-let* (((name . keys) args)
+          (arg-alist (skeletor--plist-to-alist keys)))
+    (skeletor--validate-macro-arguments name arg-alist)
+    (let-alist arg-alist
+      (list (cons 'constructor-fname (intern (format "skeletor--create-%s" name)))
+            (cons 'title (or .title (s-join " " (-map 's-capitalize (s-split-words name)))))
+            (cons 'name name)
+            (cons 'use-git? (not .no-git?))
+            (cons 'initialise-fn .initialise)
+            (cons 'before-git (or .before-git 'ignore))
+            (cons 'after-creation (or .after-creation 'ignore))
+            (cons 'create-license? (not .no-license?))
+            (cons 'license-file-name (or .license-file-name "COPYING"))
+            (cons 'default-license-var (intern (format "%s-default-license" name)))
+            (cons 'substitutions (eval .substitutions))
+            (cons 'requires-executables (eval .requires-executables))))))
 
-           (unless (f-exists? skeletor-project-directory)
-             (make-directory skeletor-project-directory t))
-           (funcall #',initialise project-name skeletor-project-directory)
-           (cl-assert (f-exists? dest) t
-                      "Initialisation function failed to create project at %s")
+(defun skeletor--plist-to-alist (plist)
+  "Convert PLIST to an alist, replacing keyword keys with symbols."
+  (->> (-partition-in-steps 2 2 plist)
+       (-map (-lambda ((k v))
+               (cons (intern (s-chop-prefix ":" (symbol-name k)))
+                     v)))))
 
-           (funcall #',before-git dest)
-           (when license-file
-             (skeletor--instantiate-license-file
-              license-file (f-join dest ,license-file-name) repls))
-           (unless ,no-git?
-             (skeletor--prepare-git dest))
-           (funcall #',after-creation dest)
-           (run-hook-with-args 'skeletor-after-project-instantiated-hook dest)
-           (skeletor--show-project dest)
-           (message "Project created at %s" dest)))
+(defun skeletor--validate-macro-arguments (name args)
+  (cl-assert (skeletor--alist-keys-are-all-legal? args)  t)
+  (let-alist args
+    (cl-assert (stringp name) t)
+    (cl-assert (functionp .initialise) t)
+    (cl-assert (or (null .title) (stringp .title)) t)
+    (cl-assert (or (null .license-file-name) (stringp .license-file-name)) t)
+    (cl-assert (or (null .before-git) (functionp .before-git)) t)
+    (cl-assert (or (null .after-creation) (functionp .after-creation)) t)
+    (let ((execs (eval .requires-executables)))
+      (cl-assert (listp execs) t)
+      (cl-assert (skeletor--alist-all-keys-are-strings? execs) t)
+      (cl-assert (skeletor--alist-all-values-are-strings? execs) t))
+    (let ((subs (eval .substitutions)))
+      (cl-assert (listp subs) t)
+      (cl-assert (skeletor--alist-all-keys-are-strings? subs) t))))
 
-       (add-to-list 'skeletor--project-types (SkeletorProjectType ,title ',constructor)))))
+(defun skeletor--alist-keys (alist) (-map 'car alist))
+(defun skeletor--alist-all-keys-are-strings? (alist)   (-all? 'stringp (skeletor--alist-keys alist)))
+(defun skeletor--alist-all-values-are-strings? (alist) (-all? 'stringp (-map 'cdr alist)))
+
+(defvar skeletor--legal-keys
+  '(title initialise before-git after-creation no-git? no-license?
+          default-license license-file-name requires-executables substitutions))
+
+(defun skeletor--alist-keys-are-all-legal? (alist)
+  (null (-difference (skeletor--alist-keys alist) skeletor--legal-keys)))
+
+(defun skeletor--ctor-skeleton-initialisation-fn (runtime-spec)
+  (let-alist runtime-spec
+    (-if-let (skeleton (skeletor--get-named-skeleton .name))
+        (skeletor--ctor-instantiate-project-from-skeleton runtime-spec skeleton)
+      (let ((err (format "Skeleton %s not found" .name)))
+        (skeletor--log-error err)
+        (error err)))))
+
+(defun skeletor--ctor-runtime-spec (spec)
+  "Concatenate the given macro SPEC with values evaluated at runtime."
+  (let ((project-name (skeletor--read-project-name)))
+    (let-alist spec
+      (-concat (list
+                (cons 'project-name project-name)
+                (cons 'project-dir skeletor-project-directory)
+                (cons 'dest (f-join skeletor-project-directory project-name))
+                (cons 'license-file
+                      (when .create-license?
+                        (skeletor--read-license "License: " .license-file-name)))
+                (cons 'repls (-map 'skeletor--eval-substitution
+                                   (-concat
+                                    skeletor-global-substitutions
+                                    (list (cons "__PROJECT-NAME__" project-name)
+                                          (cons "__LICENSE-FILE-NAME__" .license-file-name))
+                                    .substitutions))))
+               spec))))
+
+(defun skeletor--run-ctor (runtime-spec)
+  (let-alist runtime-spec
+    (let ((default-directory .dest))
+      (skeletor-require-executables .exec-alist)
+      (setq skeletor--current-project-root .dest)
+      (switch-to-buffer (skeletor--current-project-shell-buffer))
+      (skeletor--create-project-skeleton runtime-spec)
+      (skeletor--ctor-run-setup-steps runtime-spec)
+      (skeletor--show-project .dest))))
+
+(defun skeletor--create-project-skeleton (runtime-spec)
+  (let-alist runtime-spec
+    (if .initialise-fn
+        (funcall .initialise-fn runtime-spec)
+      (let ((err (format "No initialisation function supplied" .name)))
+        (skeletor--log-error (concat err ". Specification:"))
+        (skeletor--log-error (pp-to-string runtime-spec))
+        (error err)))
+
+    (skeletor--log-info "Project created at %s" .dest)))
+
+(defun skeletor--ctor-instantiate-project-from-skeleton (spec skeleton)
+  (let-alist spec
+    (unless (f-exists? skeletor-project-directory)
+      (make-directory skeletor-project-directory t))
+    (skeletor--instantiate-skeleton-dir .repls skeleton .dest)
+    (when .license-file
+      (skeletor--instantiate-license-file
+       .license-file (f-join .dest .license-file-name) .repls))))
+
+(defun skeletor--get-named-skeleton (name)
+  (-first 'f-exists?
+          (list (f-expand name skeletor-user-directory)
+                (f-expand name skeletor--directory))))
+
+(defun skeletor--ctor-run-setup-steps (runtime-spec)
+  (let-alist runtime-spec
+    (funcall .before-git .dest)
+    (when (and .use-git? skeletor-init-with-git)
+      (skeletor--prepare-git .dest)
+      (skeletor--log-info "Git initialised"))
+    (funcall .after-creation .dest)
+    (run-hook-with-args 'skeletor-after-project-instantiated-hook .dest)))
 
 (defun skeletor--gen-license-var-docstring (name)
   (concat "Auto-generated variable.\n\nThe default license type for " name " skeletons."))
@@ -993,27 +970,30 @@ SRC-DIR is the path to the project src directory."
   :title "Haskell Project"
   :requires-executables '(("cabal" . "http://www.haskell.org/cabal/"))
   :no-license? t
-  :after-creation
+  :before-git
   (lambda (dir)
     (when (skeletor-hs--cabal-sandboxes-supported?)
       (skeletor--log-info "Initialising sandbox...")
       (skeletor-shell-command "cabal sandbox init"))
 
+    (skeletor--log-info "Running cabal init...")
     (skeletor-with-shell-setup "cabal init"
-      (lambda ()
-        (let ((cabal-file (car (f-entries dir (lambda (f) (equal "cabal" (f-ext f))))))
-              (src-dir (f-join dir "src")))
-          (skeletor-hs--post-process-cabal-file cabal-file)
-          (f-mkdir src-dir)
-          (skeletor-hs--init-src-file cabal-file src-dir))))))
+                               `(lambda ()
+                                  (let* ((proj-root ,dir)
+                                         (cabal-file (car (f-entries proj-root (lambda (f) (equal "cabal" (f-ext f))))))
+                                         (src-dir (f-join proj-root "src")))
+                                    (skeletor-hs--post-process-cabal-file cabal-file)
+                                    (f-mkdir src-dir)
+                                    (skeletor-hs--init-src-file cabal-file src-dir))))))
 
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
   :no-license? t
   :initialise
-  (lambda (name project-dir)
-    (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument name))
-                            project-dir))
+  (lambda (spec)
+    (let-alist spec
+      (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument .project-name))
+                              .project-dir)))
   :before-git
   (lambda (dir)
     (when (and (executable-find "rspec")
@@ -1043,14 +1023,15 @@ This is a lengthy operation so the results are cached to
 (skeletor-define-constructor "Clojure Project"
   :requires-executables '(("lein" . "http://leiningen.org/"))
   :initialise
-  (lambda (name project-dir)
-    (message "Finding Leningen templates...")
-    (let ((type (funcall skeletor-completing-read-function
-                         "Template: " (skeletor-clj--project-types) nil t "default")))
-      (skeletor-shell-command (format "lein new %s %s"
-                                      (shell-quote-argument type)
-                                      (shell-quote-argument name))
-                              project-dir))))
+  (lambda (spec)
+    (let-alist spec
+      (message "Finding Leningen templates...")
+      (let ((type (funcall skeletor-completing-read-function
+                           "Template: " (skeletor-clj--project-types) nil t "default")))
+        (skeletor-shell-command (format "lein new %s %s"
+                                        (shell-quote-argument type)
+                                        (shell-quote-argument .project-name))
+                                .project-dir)))))
 
 (defun skeletor-scala--version ()
   "Get the version of the installed scala executable."

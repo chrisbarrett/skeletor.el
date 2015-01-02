@@ -1,5 +1,6 @@
 (source melpa)
 (source org)
+(source gnu)
 
 (package-file "skeletor.el")
 

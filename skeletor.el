@@ -249,19 +249,21 @@ found.
 ALIST is a list of `(PROGRAM-NAME . URL)', where URL points to
 download instructions."
   (-when-let (not-found (--remove (executable-find (car it)) alist))
-    (let ((buf (get-buffer-create "*Skeletor Rage*")))
+    (let ((buf (skeletor--current-project-shell-buffer)))
       (with-help-window buf
         (with-current-buffer buf
-          (insert (concat
-                   "This template requires external tools which "
-                   "could not be found.\n\n"
-                   "See each item below for installation instructions.\n"))
-          (--each not-found
-            (cl-destructuring-bind (program . url) it
-              (insert "\n - ")
-              (insert-button program
-                             'action (lambda (x) (browse-url (button-get x 'url)))
-                             'url url))))))
+          (goto-char (point-max))
+          (skeletor--log-error
+           (concat
+            "This template requires external tools which "
+            "could not be found.\n\n"
+            "See each item below for installation instructions.\n"))
+          (-each not-found (-lambda ((program . url))
+                             (let ((inhibit-read-only t))
+                               (insert "\n - ")
+                               (insert-button program
+                                              'action (lambda (x) (browse-url (button-get x 'url)))
+                                              'url url)))))))
     (user-error "Cannot find executable(s) needed to create project")))
 
 ;;; ----------------------------- Internal -------------------------------------
@@ -805,7 +807,7 @@ This can be used to add bindings for command-line tools.
 
 (defun skeletor--log-spec (runtime-spec)
   (skeletor--log-info "Creating with specification:")
-  (skeletor--log-note (pp-to-string runtime-spec)))
+  (skeletor--log-note "%s" (pp-to-string runtime-spec)))
 
 (defun skeletor--create-project-skeleton (runtime-spec)
   (let-alist runtime-spec

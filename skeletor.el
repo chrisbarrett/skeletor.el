@@ -797,9 +797,9 @@ This can be used to add bindings for command-line tools.
 (defun skeletor--run-ctor (runtime-spec)
   (let-alist runtime-spec
     (let ((default-directory .dest))
+      (setq skeletor--current-project-root .dest)
       (skeletor--log-spec runtime-spec)
       (skeletor-require-executables .required-executables)
-      (setq skeletor--current-project-root .dest)
       (switch-to-buffer (skeletor--current-project-shell-buffer))
       (skeletor--create-project-skeleton runtime-spec)
       (skeletor--ctor-run-setup-steps runtime-spec)

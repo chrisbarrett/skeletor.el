@@ -727,7 +727,7 @@ This can be used to add bindings for command-line tools.
             (cons 'license-file-name (or .license-file-name "COPYING"))
             (cons 'default-license-var (intern (format "%s-default-license" name)))
             (cons 'substitutions (eval .substitutions))
-            (cons 'requires-executables (eval .requires-executables))))))
+            (cons 'required-executables (eval .requires-executables))))))
 
 (defun skeletor--plist-to-alist (plist)
   "Convert PLIST to an alist, replacing keyword keys with symbols."
@@ -796,7 +796,7 @@ This can be used to add bindings for command-line tools.
   (let-alist runtime-spec
     (let ((default-directory .dest))
       (skeletor--log-spec runtime-spec)
-      (skeletor-require-executables .exec-alist)
+      (skeletor-require-executables .required-executables)
       (setq skeletor--current-project-root .dest)
       (switch-to-buffer (skeletor--current-project-shell-buffer))
       (skeletor--create-project-skeleton runtime-spec)

@@ -322,6 +322,9 @@ download instructions."
     (insert (propertize (format "\n--> [%s]: %s\n" (f-short dir) cmd)
                         'face 'compilation-warning))))
 
+(defun skeletor--log-note (format-string &rest args)
+  (skeletor--log (propertize (apply 'format format-string args) 'face 'compilation-info)))
+
 (defun skeletor--log-error (format-string &rest args)
   (skeletor--log (propertize (apply 'format format-string args) 'face 'compilation-error)))
 
@@ -763,8 +766,8 @@ This can be used to add bindings for command-line tools.
 
 (defun skeletor--ctor-skeleton-initialisation-fn (runtime-spec)
   (let-alist runtime-spec
-    (-if-let (skeleton (skeletor--get-named-skeleton .name))
-        (skeletor--ctor-instantiate-project-from-skeleton runtime-spec skeleton)
+    (if .skeleton
+        (skeletor--ctor-instantiate-project-from-skeleton runtime-spec)
       (let ((err (format "Skeleton %s not found" .name)))
         (skeletor--log-error err)
         (error err)))))
@@ -777,6 +780,7 @@ This can be used to add bindings for command-line tools.
                 (cons 'project-name project-name)
                 (cons 'project-dir skeletor-project-directory)
                 (cons 'dest (f-join skeletor-project-directory project-name))
+                (cons 'skeleton (skeletor--get-named-skeleton .name))
                 (cons 'license-file
                       (when .create-license?
                         (skeletor--read-license "License: " .license-file-name)))
@@ -791,12 +795,17 @@ This can be used to add bindings for command-line tools.
 (defun skeletor--run-ctor (runtime-spec)
   (let-alist runtime-spec
     (let ((default-directory .dest))
+      (skeletor--log-spec runtime-spec)
       (skeletor-require-executables .exec-alist)
       (setq skeletor--current-project-root .dest)
       (switch-to-buffer (skeletor--current-project-shell-buffer))
       (skeletor--create-project-skeleton runtime-spec)
       (skeletor--ctor-run-setup-steps runtime-spec)
       (skeletor--show-project .dest))))
+
+(defun skeletor--log-spec (runtime-spec)
+  (skeletor--log-info "Creating with specification:")
+  (skeletor--log-note (pp-to-string runtime-spec)))
 
 (defun skeletor--create-project-skeleton (runtime-spec)
   (let-alist runtime-spec
@@ -809,11 +818,11 @@ This can be used to add bindings for command-line tools.
 
     (skeletor--log-info "Project created at %s" .dest)))
 
-(defun skeletor--ctor-instantiate-project-from-skeleton (spec skeleton)
+(defun skeletor--ctor-instantiate-project-from-skeleton (spec)
   (let-alist spec
     (unless (f-exists? skeletor-project-directory)
       (make-directory skeletor-project-directory t))
-    (skeletor--instantiate-skeleton-dir .repls skeleton .dest)
+    (skeletor--instantiate-skeleton-dir .repls .skeleton .dest)
     (when .license-file
       (skeletor--instantiate-license-file
        .license-file (f-join .dest .license-file-name) .repls))))

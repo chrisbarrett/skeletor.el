@@ -4,5 +4,5 @@
 *.tar
 TAGS
 elpa
-doc/skeletor.info
+doc/skeletor.texi
 dist

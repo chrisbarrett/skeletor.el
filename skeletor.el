@@ -428,9 +428,12 @@ An expression has the form \"__(expr)__\"."
   (with-temp-buffer
     (insert str)
     (goto-char (point-min))
-    (let ((sexp-prod (rx "__" (group "(" (+? anything)")") "__")))
+    (let ((sexp-prod (rx "__" (group "(" (+? anything) ")") "__")))
       (while (search-forward-regexp sexp-prod nil t)
-        (replace-match (pp-to-string (eval (read (match-string 1)))) t)))
+        (with-demoted-errors "Error: %s"
+          (replace-match
+           (save-match-data
+             (format "%s" (eval (read (match-string 1))))) t))))
     (buffer-string)))
 
 ;; [(String,String)], String -> String

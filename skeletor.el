@@ -192,7 +192,7 @@ to obtain its version."
 (defvar skeletor-project-spec nil
   "The full data structure representing the template being instantiated.
 
-It is an alist, an can be conveniently inspected using
+It is an alist, and can be conveniently inspected using
 `let-alist' or `assoc'.
 
 This is exposed under the caveat that it is used by Skeletor

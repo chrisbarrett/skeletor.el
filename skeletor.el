@@ -873,7 +873,7 @@ SKELETON is a SkeletorProjectType."
 DIR is destination directory, which must exist.
 
 SKELETON is a SkeletorProjectType."
-  (interactive (list (ido-read-directory-name "Create at: " nil nil t)
+  (interactive (list (read-directory-name "Create at: " nil nil t)
                      (skeletor--read-project-type)))
   ;; Dynamically rebind the project directory.
   (let ((skeletor-project-directory dir))

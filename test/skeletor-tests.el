@@ -49,6 +49,8 @@
 (defvar spec-instance)
 (defvar test-substitutions)
 (defvar test-token)
+(defvar project-name)
+
 
 ;; Regenerate random vars each test run.
 
@@ -58,7 +60,9 @@
 
       test-token (concat "MiXcAsE" (md5 (number-to-string (random))))
 
-      test-substitutions `(("__PROJECT-NAME__" . ,template-name)
+      project-name (md5 (number-to-string (random)))
+
+      test-substitutions `(("__PROJECT-NAME__" . ,project-name)
                            ("__TOKEN__"        . ,test-token))
 
       spec-instance     (skeletor--expand-template-paths test-substitutions
@@ -94,15 +98,15 @@ Elements are compared using `equal'."
                         (-map 'car (SkeletorExpansionSpec-files spec-instance)))))
 
 (ert-deftest expands-tokens-in-dirnames-when-expanding-template ()
-  (should (--only-some? (s-matches? template-name (f-filename (cdr it)))
+  (should (--only-some? (s-matches? project-name (f-filename (cdr it)))
                         (SkeletorExpansionSpec-dirs spec-instance))))
 
 (ert-deftest expands-tokens-in-filenames-when-expanding-template ()
-  (should (--only-some? (s-matches? template-name (f-filename (cdr it)))
+  (should (--only-some? (s-matches? project-name (f-filename (cdr it)))
                         (SkeletorExpansionSpec-files spec-instance))))
 
 (ert-deftest instance-starts-with-project-name--not-template-name ()
-  (should (--none? (s-ends-with? (f-slash template-name) (f-dirname (cdr it)))
+  (should (--none? (s-ends-with? (f-slash project-name) (f-dirname (cdr it)))
                    (-concat (SkeletorExpansionSpec-files spec-instance)
                             (SkeletorExpansionSpec-dirs spec-instance)))))
 
@@ -131,32 +135,51 @@ Elements are compared using `equal'."
 
 ;;; Integration tests
 
-(skeletor--instantiate-skeleton-dir test-substitutions template-path destination-path)
+(skeletor-define-template "example-project"
+  :substitutions `(("__TOKEN__" . ,test-token)))
+
+(let ((skeletor--read-project-name-fn (lambda (&rest _) project-name))
+      (skeletor--read-license-fn (lambda (&rest _) "GPL"))
+      (skeletor--read-project-type-fn (lambda (&rest _) "example-project"))
+
+      (skeletor-user-directory this-dir)
+      )
+  (skeletor-create-project-at destination-path (car skeletor--project-types))
+  )
 
 (ert-deftest instantiates-all-files-in-template ()
   (should (equal (length (f-files template-path nil t))
-                 (length (f-files destination-path nil t)))))
+                 (length (f-files destination-path
+                                  (lambda (it) (not (s-matches? (rx ".git/") it)))
+                                  t)))))
 
 (ert-deftest instantiates-all-dirs-in-template ()
-  (should (equal (length (f-directories template-path nil t))
-                 (length (f-directories destination-path nil t)))))
+  (should
+   (equal (length (f-directories template-path nil t))
+          (length (--remove (equal project-name (f-filename it))
+                            (f-directories destination-path
+                                           (lambda (it) (not (s-matches? (rx ".git") it)))
+                                           t))))))
+
+(ert-deftest initialises-git-repo ()
+  (should (-contains? (-map 'f-filename (f-directories destination-path nil t)) ".git")))
 
 (ert-deftest expands-tokens-in-instantiated-files ()
   (should (--only-some? (s-contains? test-token (f-read it))
                         (f-files destination-path nil t))))
 
 (ert-deftest expands-file-name-tokens-in-instantiated-project ()
-  (should (--only-some? (s-starts-with? template-name (f-filename it))
+  (should (--only-some? (s-starts-with? project-name (f-filename it))
                         (f-files destination-path nil t))))
 
 (ert-deftest expands-directory-name-tokens-in-instantiated-project ()
-  (should (--only-some? (s-starts-with? template-name (f-filename it))
+  (should (--only-some? (s-starts-with? project-name (f-filename it))
                         (f-directories destination-path nil t))))
 
 (ert-deftest transforms-gitignore-in-template-to-dotgitignore ()
-  (let ((gitignores (f-files destination-path
-                             (lambda (it) (equal ".gitignore" (f-filename it))))))
-    (should (equal 1 (length gitignores)))))
+  (should (-contains? (-map 'f-filename (f-files destination-path nil t))
+                      ".gitignore")))
+
 
 (provide 'skeletor-tests)
 

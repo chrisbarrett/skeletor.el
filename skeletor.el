@@ -553,6 +553,8 @@ Otherwise immediately initialise git."
                     (t
                      repl))))
 
+(defvar skeletor--read-license-fn nil)
+
 ;; String, Regex -> IO FilePath
 (defun skeletor--read-license (prompt default)
   "Prompt the user to select a license.
@@ -560,31 +562,35 @@ Otherwise immediately initialise git."
 * PROMPT is the prompt shown to the user.
 
 * DEFAULT a regular expression used to find the default."
-  (let* ((xs (--map (cons (s-upcase (f-filename it)) it)
-                    (f-files skeletor--licenses-directory)))
-         (d (unless (s-blank? default)
-              (car (--first (s-matches? default (car it)) xs))))
-         (choice (funcall skeletor-completing-read-function
-                          prompt (-map 'car xs) nil t d)))
-    (cdr (assoc choice xs))))
+  (let* ((license-names (--map (cons (s-upcase (f-filename it)) it)
+                               (f-files skeletor--licenses-directory)))
+         (default (unless (s-blank? default)
+                    (car (--first (s-matches? default (car it)) license-names))))
+         (choice (funcall (or skeletor--read-license-fn skeletor-completing-read-function)
+                          prompt (-map 'car license-names) nil t default)))
+    (cdr (assoc choice license-names))))
+
+(defvar skeletor--read-project-type-fn nil)
 
 ;; IO SkeletorProjectType
 (defun skeletor--read-project-type ()
   "Prompt the user to select a project skeleton."
-  (let ((title
-         (completing-read "Skeleton: "
-                          (->> skeletor--project-types
-                               (-map 'SkeletorProjectType-title)
-                               (-sort 'string<))
-                          nil t)))
+  (let* ((skeletons (->> skeletor--project-types
+                         (-map 'SkeletorProjectType-title)
+                         (-sort 'string<)))
+         (title
+          (funcall (or skeletor--read-project-type-fn skeletor-completing-read-function)
+                   "Skeleton: " skeletons nil t)))
 
     (--first (equal title (SkeletorProjectType-title it))
              skeletor--project-types)))
 
+(defvar skeletor--read-project-name-fn 'read-string)
+
 ;; {String} -> IO String
 (cl-defun skeletor--read-project-name (&optional (prompt "Project Name: "))
   "Read a project name from the user."
-  (let* ((name (read-string prompt))
+  (let* ((name (funcall skeletor--read-project-name-fn prompt))
          (dest (f-join skeletor-project-directory name)))
     (cond
      ((s-blank? name)

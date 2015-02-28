@@ -178,6 +178,26 @@ to obtain its version."
   :group 'skeletor
   :type 'boolean)
 
+;;; Vars for use in templates
+
+(defvar skeletor-project-name nil
+  "The name of the project currently being instantiated.")
+
+(defvar skeletor-project-root nil
+  "The base directory of the project currently being instantiated.")
+
+(defvar skeletor-project-license nil
+  "The license type of the project currently being instantiated.")
+
+(defvar skeletor-project-spec nil
+  "The full data structure representing the template being instantiated.
+
+It is an alist, an can be conveniently inspected using
+`let-alist' or `assoc'.
+
+This is exposed under the caveat that it is used by Skeletor
+internally and is subject to change.")
+
 ;;; -------------------------- Public Utilities --------------------------------
 
 (defun skeletor-shell-command (command &optional dir)
@@ -811,6 +831,10 @@ This can be used to add bindings for command-line tools.
     (let-alist runtime-spec
       (let ((default-directory .dest))
         (setq skeletor--current-project-root .dest)
+        (setq skeletor-project-root .dest)
+        (setq skeletor-project-name .project-name)
+        (setq skeletor-project-license .license-file)
+        (setq skeletor-project-spec runtime-spec)
         (skeletor--log-spec runtime-spec)
         (skeletor-require-executables .required-executables)
         (switch-to-buffer (skeletor--current-project-shell-buffer))

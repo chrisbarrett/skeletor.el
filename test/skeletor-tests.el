@@ -42,6 +42,8 @@
 
 (defvar template-path   (f-join this-dir template-name))
 
+(defvar license-name "MIT")
+
 ;; Predeclare variables to prevent warnings.
 
 (defvar destination-path)
@@ -50,6 +52,7 @@
 (defvar test-substitutions)
 (defvar test-token)
 (defvar project-name)
+
 
 
 ;; Regenerate random vars each test run.
@@ -75,6 +78,9 @@
   "Return non-nil if XS and YS are identical sets.
 Elements are compared using `equal'."
   (not (or (-difference xs ys) (-difference ys xs))))
+
+(defun -alist? (form)
+  (and (listp form) (--all? (consp it) form)))
 
 ;;; Template parsing and transformations
 
@@ -139,7 +145,7 @@ Elements are compared using `equal'."
   :substitutions `(("__TOKEN__" . ,test-token)))
 
 (let ((skeletor--read-project-name-fn (lambda (&rest _) project-name))
-      (skeletor--read-license-fn (lambda (&rest _) "GPL"))
+      (skeletor--read-license-fn (lambda (&rest _) license-name))
       (skeletor--read-project-type-fn (lambda (&rest _) "example-project"))
 
       (skeletor-user-directory this-dir)
@@ -148,10 +154,11 @@ Elements are compared using `equal'."
   )
 
 (ert-deftest instantiates-all-files-in-template ()
-  (should (equal (length (f-files template-path nil t))
-                 (length (f-files destination-path
-                                  (lambda (it) (not (s-matches? (rx ".git/") it)))
-                                  t)))))
+  (let ((generated-files '("COPYING")))
+    (should (equal (length (-concat generated-files (f-files template-path nil t)))
+                   (length (f-files destination-path
+                                    (lambda (it) (not (s-matches? (rx ".git/") it)))
+                                    t))))))
 
 (ert-deftest instantiates-all-dirs-in-template ()
   (should
@@ -180,6 +187,18 @@ Elements are compared using `equal'."
   (should (-contains? (-map 'f-filename (f-files destination-path nil t))
                       ".gitignore")))
 
+(ert-deftest sets-project-root-global-variable ()
+  (should (f-equal? (f-join destination-path project-name) skeletor-project-root)))
+
+(ert-deftest sets-project-name-global-variable ()
+  (should (equal project-name skeletor-project-name)))
+
+(ert-deftest sets-license-name-global-variable ()
+  (should (s-matches? license-name skeletor-project-license)))
+
+(ert-deftest sets-spec-global-variable ()
+  (should skeletor-project-spec)
+  (should (-alist? skeletor-project-spec)))
 
 (provide 'skeletor-tests)
 

@@ -207,6 +207,13 @@ internally and is subject to change.")
 
 * DIR is an unquoted path at which to run the command."
   (let ((code (skeletor--start-shell-process :command command :dir dir :async nil)))
+
+    ;; Print output buffer error. Most useful for CI.
+    (when noninteractive
+      (unless (zerop code)
+        (message "%s" (with-current-buffer (skeletor--current-project-shell-buffer)
+                        (buffer-string)))))
+
     (cl-assert (zerop code) nil
                "Skeleton creation failed--see the output buffer for details")))
 

@@ -34,9 +34,14 @@
     (add-to-list 'flycheck-emacs-lisp-load-path (expand-file-name "../"))))
 
 (require 'ert)
+(require 'undercover)
+
+(let ((undercover-force-coverage t))
+  (undercover "skeletor.el"))
+
 (require 'skeletor)
 
-(defvar this-dir        (f-dirname (or load-file-name (buffer-file-name))))
+(defvar this-dir (f-dirname (or load-file-name (buffer-file-name))))
 
 (defvar template-name   "example-project")
 

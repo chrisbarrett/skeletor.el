@@ -4,7 +4,7 @@
 
 ;; Author: Chris Barrett <chris.d.barrett@me.com>
 ;; Package-Requires: ((s "1.7.0") (f "0.14.0") (dash "2.2.0") (cl-lib "0.3") (let-alist "1.0.3")(emacs "24.1"))
-;; Version: 1.4.1
+;; Version: 1.5.2
 
 ;; This file is not part of GNU Emacs.
 
@@ -192,7 +192,7 @@ to obtain its version."
 (defvar skeletor-project-spec nil
   "The full data structure representing the template being instantiated.
 
-It is an alist, an can be conveniently inspected using
+It is an alist, and can be conveniently inspected using
 `let-alist' or `assoc'.
 
 This is exposed under the caveat that it is used by Skeletor
@@ -207,6 +207,13 @@ internally and is subject to change.")
 
 * DIR is an unquoted path at which to run the command."
   (let ((code (skeletor--start-shell-process :command command :dir dir :async nil)))
+
+    ;; Print output buffer error. Most useful for CI.
+    (when noninteractive
+      (unless (zerop code)
+        (message "%s" (with-current-buffer (skeletor--current-project-shell-buffer)
+                        (buffer-string)))))
+
     (cl-assert (zerop code) nil
                "Skeleton creation failed--see the output buffer for details")))
 

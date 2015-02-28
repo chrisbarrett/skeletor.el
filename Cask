@@ -11,4 +11,5 @@
 
 (development
  (depends-on "ert")
+ (depends-on "undercover")
  (depends-on "org-plus-contrib"))

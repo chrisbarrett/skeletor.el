@@ -1,5 +1,5 @@
 # skeletor.el <img align="right" src="assets/skeletor.jpg">
-[![Build Status](https://travis-ci.org/chrisbarrett/skeletor.el.png?branch=master)](https://travis-ci.org/chrisbarrett/skeletor.el)
+[![Build Status](https://travis-ci.org/chrisbarrett/skeletor.el.svg?branch=master)](https://travis-ci.org/chrisbarrett/skeletor.el)
 [![Coverage Status](https://coveralls.io/repos/chrisbarrett/skeletor.el/badge.svg)](https://coveralls.io/r/chrisbarrett/skeletor.el)
 [![MELPA](http://melpa.org/packages/skeletor-badge.svg)](http://melpa.org/#/skeletor)
 

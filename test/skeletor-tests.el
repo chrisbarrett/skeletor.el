@@ -41,43 +41,32 @@
 
 (require 'skeletor)
 
-(defvar this-dir (f-dirname (or load-file-name (buffer-file-name))))
+(defconst this-dir (f-dirname (or load-file-name (buffer-file-name))))
 
-(defvar template-name   "example-project")
+(defconst template-name   "example-project")
 
-(defvar template-path   (f-join this-dir template-name))
+(defconst template-path   (f-join this-dir template-name))
 
-(defvar license-name "MIT")
+(defconst license-name "MIT")
 
-;; Predeclare variables to prevent warnings.
+(defconst destination-path (make-temp-file "skeletor-test_" t))
 
-(defvar destination-path)
-(defvar template-instance)
-(defvar spec-instance)
-(defvar test-substitutions)
-(defvar test-token)
-(defvar project-name)
+(defconst template-instance (skeletor--dir->SkeletorTemplate template-path))
 
+(defconst test-token (concat "MiXcAsE" (md5 (number-to-string (random)))))
 
+(defconst project-name (md5 (number-to-string (random))))
 
-;; Regenerate random vars each test run.
+(defconst test-substitutions `(("__PROJECT-NAME__" . ,project-name)
+                               ("__TOKEN__"        . ,test-token)))
 
-(setq destination-path  (make-temp-file "skeletor-test_" t)
+(defconst default-project-name (md5 (number-to-string (random))))
 
-      template-instance (skeletor--dir->SkeletorTemplate template-path)
-
-      test-token (concat "MiXcAsE" (md5 (number-to-string (random))))
-
-      project-name (md5 (number-to-string (random)))
-
-      test-substitutions `(("__PROJECT-NAME__" . ,project-name)
-                           ("__TOKEN__"        . ,test-token))
-
-      spec-instance     (skeletor--expand-template-paths test-substitutions
+(defconst spec-instance (skeletor--expand-template-paths test-substitutions
                                                          destination-path
                                                          template-instance))
 
-;;; Utility functions
+;;; Utilities
 
 (defun -sets-equal? (xs ys)
   "Return non-nil if XS and YS are identical sets.
@@ -86,6 +75,16 @@ Elements are compared using `equal'."
 
 (defun -alist? (form)
   (and (listp form) (--all? (consp it) form)))
+
+(defmacro -with-stubbed-user-interaction (&rest body)
+  "Execute BODY forms with user input stubbed out."
+  (declare (indent 0))
+  `(let* ((skeletor--read-project-name-fn (lambda (&rest _) project-name))
+          (skeletor--read-license-fn (lambda (&rest _) license-name))
+          (skeletor--read-project-type-fn (lambda (&rest _) "example-project"))
+
+          (skeletor-user-directory this-dir))
+     ,@body))
 
 ;;; Template parsing and transformations
 
@@ -149,14 +148,8 @@ Elements are compared using `equal'."
 (skeletor-define-template "example-project"
   :substitutions `(("__TOKEN__" . ,test-token)))
 
-(let ((skeletor--read-project-name-fn (lambda (&rest _) project-name))
-      (skeletor--read-license-fn (lambda (&rest _) license-name))
-      (skeletor--read-project-type-fn (lambda (&rest _) "example-project"))
-
-      (skeletor-user-directory this-dir)
-      )
-  (skeletor-create-project-at destination-path (car skeletor--project-types))
-  )
+(-with-stubbed-user-interaction
+  (skeletor-create-project-at destination-path (car skeletor--project-types)))
 
 (ert-deftest instantiates-all-files-in-template ()
   (let ((generated-files '("COPYING")))

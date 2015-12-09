@@ -2,8 +2,11 @@
 [![Build Status](https://travis-ci.org/chrisbarrett/skeletor.el.svg?branch=master)](https://travis-ci.org/chrisbarrett/skeletor.el)
 [![Coverage Status](https://coveralls.io/repos/chrisbarrett/skeletor.el/badge.svg)](https://coveralls.io/r/chrisbarrett/skeletor.el)
 [![MELPA](http://melpa.org/packages/skeletor-badge.svg)](http://melpa.org/#/skeletor)
+[![MELPA Stable](http://stable.melpa.org/packages/skeletor-badge.svg)](http://melpa.org/#/skeletor)
+[![License](http://img.shields.io/:license-gpl3-blue.svg)](./COPYING)
+       
 
-Skeletor provides project templates for Emacs. It also automates the mundane
+Skeletor provides *project templates for Emacs*. It also automates the mundane
 parts of setting up a new project like version control, licenses and tooling.
 
 Skeletor comes with a number of predefined templates and allows you to

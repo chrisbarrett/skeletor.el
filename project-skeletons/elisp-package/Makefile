@@ -50,3 +50,11 @@ $(TAR) : $(DIST) $(SRCS)
 
 $(DIST) :
 	mkdir $(DIST)
+
+test: unit ecukes
+
+unit:
+	${CASK} exec ert-runner
+
+ecukes:
+	${CASK} exec ecukes

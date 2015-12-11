@@ -17,9 +17,6 @@ matrix:
   allow_failures:
     - env: EVM_EMACS=emacs-git-snapshot
 
-before_script:
-  - make env
-
 script:
   - emacs --version
   - make

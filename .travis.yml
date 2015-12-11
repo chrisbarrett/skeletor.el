@@ -6,6 +6,10 @@ before_install:
   - evm install $EVM_EMACS --use --skip
   - cask
 
+before_script:
+  - git config --global user.name server
+  - git config --global user.email server@server.com
+
 env:
   - EVM_EMACS=emacs-24.3-travis
   - EVM_EMACS=emacs-24.4-travis

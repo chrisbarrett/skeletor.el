@@ -58,3 +58,12 @@ $(TEXI_MANUAL) : $(PKG_DIR) $(ORG_MANUAL)
 	$(CASK) exec $(EMACSBATCH) \
 	-l org -l ox-texinfo \
 	--file=$(ORG_MANUAL) -f org-texinfo-export-to-texinfo
+
+
+test: unit ecukes
+
+unit:
+	${CASK} exec ert-runner
+
+ecukes:
+	${CASK} exec ecukes

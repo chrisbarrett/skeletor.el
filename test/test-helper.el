@@ -2,7 +2,16 @@
 
 ;;; Code:
 
+(when (require 'undercover nil t)
+  (undercover "skeletor.el"))
+
+(require 'skeletor)
+(require 'ert)
+(require 's)
+(require 'dash)
 (require 'f)
+
+;;; Test variables
 
 (defvar skeletor-path
   (f-parent (f-this-file)))
@@ -37,17 +46,6 @@
     (dolist (it (file-expand-wildcards "../.cask/*/elpa/*"))
       (add-to-list 'flycheck-emacs-lisp-load-path it))
     (add-to-list 'flycheck-emacs-lisp-load-path (expand-file-name "../"))))
-
-(when (require 'undercover nil t)
-    (undercover "skeletor.el" ))
-(require 'skeletor)
-
-(require 'ert)
-(require 'el-mock)
-(eval-when-compile
-  (require 'cl))
-(require 's)
-(require 'dash)
 
 ;;; Utilities
 

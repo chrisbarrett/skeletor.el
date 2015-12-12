@@ -18,13 +18,9 @@ TEXI_MANUAL  = doc/__PROJECT-NAME__.texi
 TAR          = $(DIST)/__PROJECT-NAME__-$(VERSION).tar
 
 
-.PHONY: all check install uninstall reinstall clean-all clean
-all : $(PKG_DIR) $(TAR)
+.PHONY: all test unit ecukes install uninstall reinstall clean-all clean
 
-check : $(PKG_DIR)
-	$(CASK) exec $(EMACSBATCH) \
-	$(patsubst %,-l % , $(SRCS) $(TESTS)) \
-	-f ert-run-tests-batch-and-exit
+all : $(PKG_DIR) $(TAR)
 
 install : $(TAR)
 	$(EMACSBATCH) -l package -f package-initialize \
@@ -59,11 +55,10 @@ $(TEXI_MANUAL) : $(PKG_DIR) $(ORG_MANUAL)
 	-l org -l ox-texinfo \
 	--file=$(ORG_MANUAL) -f org-texinfo-export-to-texinfo
 
-
 test: unit ecukes
 
-unit:
+unit: $(PKG_DIR)
 	${CASK} exec ert-runner
 
-ecukes:
+ecukes: $(PKG_DIR)
 	${CASK} exec ecukes

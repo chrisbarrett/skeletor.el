@@ -1,4 +1,4 @@
-;;; skeletor-tests.el --- Tests for skeletor.el
+;;; skeletor-test.el --- Tests for skeletor.el  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013 Chris Barrett
 
@@ -163,6 +163,6 @@
   (should skeletor-project-spec)
   (should (-alist? skeletor-project-spec)))
 
-(provide 'skeletor-tests)
+(provide 'skeletor-test)
 
-;;; skeletor-tests.el ends here
+;;; skeletor-test.el ends here

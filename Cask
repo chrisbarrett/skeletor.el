@@ -11,5 +11,7 @@
 
 (development
  (depends-on "ert-runner")
+ (depends-on "f")
+ (depends-on "el-mock")
  (depends-on "undercover")
  (depends-on "org-plus-contrib"))

@@ -20,7 +20,6 @@ matrix:
 script:
   - emacs --version
   - make info
-  - make check
   - make test
 
 addons:

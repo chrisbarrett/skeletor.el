@@ -24,4 +24,4 @@ matrix:
 script:
   - emacs --version
   - make
-  - make check
+  - make test

@@ -18,7 +18,7 @@ TEXI_MANUAL = doc/skeletor.texi
 TAR         = $(DIST)/skeletor-$(VERSION).tar
 
 
-.PHONY: all test ecukes unit install uninstall reinstall clean-all clean
+.PHONY: all test unit install uninstall reinstall clean-all clean
 all : $(PKG_DIR) $(TAR)
 
 install : $(TAR)
@@ -54,10 +54,7 @@ $(TEXI_MANUAL) : $(PKG_DIR) $(ORG_MANUAL)
 	-l org -l ox-texinfo \
 	--file=$(ORG_MANUAL) -f org-texinfo-export-to-texinfo
 
-test: unit ecukes
+test: unit
 
 unit: $(PKG_DIR)
 	${CASK} exec ert-runner
-
-ecukes: $(PKG_DIR)
-	${CASK} exec ecukes

@@ -1,10 +1,14 @@
 (source melpa)
-(source org)
 
 (package-file "__PROJECT-NAME__.el")
 
 (development
- (depends-on "org-plus-contrib")
  (depends-on "ert")
  (depends-on "flycheck")
- (depends-on "flycheck-cask"))
+ (depends-on "flycheck-cask")
+ (depends-on "f")
+ (depends-on "ecukes")
+ (depends-on "ert-runner")
+ (depends-on "el-mock")
+ (depends-on "cask-package-toolset")
+ (depends-on "undercover"))

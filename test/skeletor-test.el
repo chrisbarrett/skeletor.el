@@ -26,21 +26,6 @@
 
 ;;; Code:
 
-(eval-and-compile
-  ;; Add project root to flycheck checker load path to prevent spurious warnings.
-  (when (boundp 'flycheck-emacs-lisp-load-path)
-    (dolist (it (file-expand-wildcards "../.cask/*/elpa/*"))
-      (add-to-list 'flycheck-emacs-lisp-load-path it))
-    (add-to-list 'flycheck-emacs-lisp-load-path (expand-file-name "../"))))
-
-(require 'ert)
-(require 'undercover)
-
-(let ((undercover-force-coverage t))
-  (undercover "skeletor.el"))
-
-(require 'skeletor)
-
 (defconst this-dir (f-dirname (or load-file-name (buffer-file-name))))
 
 (defconst template-name   "example-project")
@@ -65,26 +50,6 @@
 (defconst spec-instance (skeletor--expand-template-paths test-substitutions
                                                          destination-path
                                                          template-instance))
-
-;;; Utilities
-
-(defun -sets-equal? (xs ys)
-  "Return non-nil if XS and YS are identical sets.
-Elements are compared using `equal'."
-  (not (or (-difference xs ys) (-difference ys xs))))
-
-(defun -alist? (form)
-  (and (listp form) (--all? (consp it) form)))
-
-(defmacro -with-stubbed-user-interaction (&rest body)
-  "Execute BODY forms with user input stubbed out."
-  (declare (indent 0))
-  `(let* ((skeletor--read-project-name-fn (lambda (&rest _) project-name))
-          (skeletor--read-license-fn (lambda (&rest _) license-name))
-          (skeletor--read-project-type-fn (lambda (&rest _) "example-project"))
-
-          (skeletor-user-directory this-dir))
-     ,@body))
 
 ;;; Template parsing and transformations
 

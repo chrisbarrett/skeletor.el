@@ -7,5 +7,11 @@ doc/__PROJECT-NAME__.texi
 doc/__PROJECT-NAME__.info
 
 # Packages
-.cask
 elpa
+/.cask
+dist
+
+# Ecukes
+/features/project/.cask
+/features/project/test/*.el
+.ecukes-failing-scenarios

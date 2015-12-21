@@ -21,6 +21,11 @@ matrix:
   allow_failures:
     - env: EVM_EMACS=emacs-git-snapshot
 
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+
 script:
   - emacs --version
   - make

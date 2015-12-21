@@ -12,13 +12,11 @@ parts of setting up a new project like version control, licenses and tooling.
 Skeletor comes with a number of predefined templates and allows you to
 easily create your own.
 
-<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc/generate-toc again -->
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
 
 - [Supported Project Types](#supported-project-types)
 - [Installation](#installation)
-    - [MELPA Installation](#melpa-installation)
-    - [Manual installation](#manual-installation)
 - [Usage](#usage)
 - [Extending](#extending)
     - [Project Skeletons](#project-skeletons)
@@ -30,6 +28,7 @@ easily create your own.
         - [Embedded Elisp](#embedded-elisp)
     - [External Tools](#external-tools)
 - [Contributing](#contributing)
+- [Development](#development)
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
 

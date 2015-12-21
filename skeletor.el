@@ -1023,7 +1023,7 @@ SRC-DIR is the path to the project src directory."
     (f-write str 'utf-8 path)))
 
 (skeletor-define-template "haskell-project"
-  :title "Haskell Project"
+  :title "Haskell Project (Cabal)"
   :requires-executables '(("cabal" . "http://www.haskell.org/cabal/"))
   :no-license? t
   :before-git
@@ -1041,6 +1041,16 @@ SRC-DIR is the path to the project src directory."
                                     (skeletor-hs--post-process-cabal-file cabal-file)
                                     (f-mkdir src-dir)
                                     (skeletor-hs--init-src-file cabal-file src-dir))))))
+
+(skeletor-define-constructor "Haskell Project (Stack)"
+  :title "Haskell Project (Stack)"
+  :no-license? t
+  :requires-executables '(("stack" . "http://docs.haskellstack.org/en/stable/README.html"))
+  :initialise
+  (lambda (spec)
+    (let-alist spec
+      (skeletor-shell-command (format "stack new %s" (shell-quote-argument .project-name))
+                              .project-dir))))
 
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))

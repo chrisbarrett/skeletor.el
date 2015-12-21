@@ -352,14 +352,13 @@ download instructions."
                         'face 'compilation-warning))))
 
 (defun skeletor--log-note (format-string &rest args)
-  (skeletor--log (propertize (apply 'format format-string args) 'face 'compilation-info)))
+  (apply 'skeletor--log (propertize format-string 'face 'compilation-info) args))
 
 (defun skeletor--log-error (format-string &rest args)
-  (skeletor--log (propertize (apply 'format format-string args) 'face 'compilation-error)))
+  (apply 'skeletor--log (propertize format-string 'face 'compilation-error) args))
 
 (defun skeletor--log-info  (format-string &rest args)
-  (skeletor--log
-   (propertize (apply 'format format-string args) 'face 'compilation-mode-line-run)))
+  (apply 'skeletor--log (propertize format-string 'face 'compilation-mode-line-run) args))
 
 (defun skeletor--log (format-string &rest args)
   "Display a message and write it to the shell command buffer."
@@ -367,7 +366,7 @@ download instructions."
     (with-current-buffer (skeletor--current-project-shell-buffer)
       (goto-char (point-max))
       (let ((inhibit-read-only t)) (insert (format "\n%s\n" msg)))
-      (message (substring-no-properties msg)))))
+      (message "%s" (substring-no-properties msg)))))
 
 (defun skeletor--log-exitcode (code)
   (let ((msg (propertize (format "%s\n" code) 'face 'compilation-info)))
@@ -851,7 +850,7 @@ This can be used to add bindings for command-line tools.
 
   (defun skeletor--log-spec (runtime-spec)
     (skeletor--log-info "Creating with specification:")
-    (skeletor--log-note "%s" (pp-to-string runtime-spec)))
+    (skeletor--log "%s" (pp-to-string runtime-spec)))
 
   (defun skeletor--create-project-skeleton (runtime-spec)
     (let-alist runtime-spec

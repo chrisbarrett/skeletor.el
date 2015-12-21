@@ -4,7 +4,7 @@
 [![MELPA](http://melpa.org/packages/skeletor-badge.svg)](http://melpa.org/#/skeletor)
 [![MELPA Stable](http://stable.melpa.org/packages/skeletor-badge.svg)](http://melpa.org/#/skeletor)
 [![License](http://img.shields.io/:license-gpl3-blue.svg)](./COPYING)
-       
+
 
 Skeletor provides *project templates for Emacs*. It also automates the mundane
 parts of setting up a new project like version control, licenses and tooling.
@@ -52,9 +52,7 @@ Skeletor is designed to be extensible so you can create your own templates.
 
 Skeletor is available on [MELPA][]. This is the easiest way to install.
 
-### MELPA Installation ###
-
-Add the following to your init.el:
+If have not already set up MELPA, add the following to your `init.el`:
 
 ```lisp
 (require 'package)
@@ -66,35 +64,10 @@ Add the following to your init.el:
 (package-initialize)
 ```
 
-Run the following in Emacs to install Skeletor:
+Execute the following command in Emacs to install Skeletor:
 
     M-x package-install skeletor
 
-### Manual installation ###
-
-You will need Emacs 24+, _make_ and [Cask][] to build the project. You will also
-need to configure MELPA to install dependencies.
-
-Add the following to your init.el:
-
-```lisp
-(require 'package)
-(add-to-list 'package-archives
-             '("melpa" . "http://melpa.milkbox.net/packages/") t)
-(when (< emacs-major-version 24)
-  ;; For important compatibility libraries like cl-lib
-  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
-(package-initialize)
-```
-
-Then run the following in the shell to clone Skeletor and install it.
-
-```sh
-cd
-git clone git@github.com:chrisbarrett/skeletor.el.git
-cd skeletor
-make && make install
-```
 
 ## Usage ##
 
@@ -347,22 +320,28 @@ Skeletor provides the `skeletor-define-constructor` macro for this purpose. It
 is similar to `skeletor-define-template`, but it requires you supply a function
 that creates the project structure itself.
 
-For example, [Bundler](http://bundler.io) is a popular tool in the Ruby community that can create new
-Ruby projects. Skeletor provides the following binding:
+`skeletor-define-constructor` has a required `:initialise` keyword parameter, which
+must be a unary function. This function is passed the raw alist that represents
+the template to be constructed. You can do whatever you want in `initialise`,
+provided you create the destination directory.
+
+As an example, [Bundler](http://bundler.io) is a popular tool in the Ruby
+community that can create new Ruby projects. Skeletor provides the following
+binding:
 
 ```lisp
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
   :no-license? t
-
   :initialise
-  (lambda (name project-dir)
-    (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument name))))
-
-  :after-creation
+  (lambda (spec)
+    (let-alist spec
+      (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument .project-name))
+                              .project-dir)))
+  :before-git
   (lambda (dir)
     (when (and (executable-find "rspec")
-               (y-or-n-p "Create RSpec test suite? "))
+                (y-or-n-p "Create RSpec test suite? "))
       (skeletor-shell-command "rspec --init"))))
 ```
 
@@ -373,6 +352,32 @@ RSpec test suite, then add everything to version control.
 
 Yes, please do! More project types are especially welcome. Read over
 [CONTRIBUTING][] for guidelines.
+
+## Development ##
+
+You will need Emacs 24+, `make` and [Cask][] to build the project. You will also
+need to configure MELPA to install dependencies.
+
+Add the following to your init.el:
+
+```lisp
+(require 'package)
+(add-to-list 'package-archives
+              '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(when (< emacs-major-version 24)
+  ;; For important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+(package-initialize)
+```
+
+Then run the following in the shell to clone Skeletor and install it.
+
+```shell
+cd
+git clone git@github.com:chrisbarrett/skeletor.el.git
+cd skeletor
+make && make install
+```
 
 ## Acknowledgements ##
 

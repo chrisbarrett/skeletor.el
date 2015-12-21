@@ -1,4 +1,4 @@
-;;; skeletor-tests.el --- Tests for skeletor.el
+;;; skeletor-test.el --- Tests for skeletor.el  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013 Chris Barrett
 
@@ -104,9 +104,11 @@
     (should (equal input (skeletor--replace-all nil input)))))
 
 (ert-deftest evaluates-embedded-elisp-in-file-templates ()
-  (let ((x (random 100))
-        (y (random 100)))
-    (should (equal (* x y) (read (skeletor--replace-all nil "__(* x y)__"))))))
+  ;; Need test variables in dynamic scope here, as let-bound variables are out
+  ;; of scope in `skeletor--replace-all'.
+  (setq x (random 100))
+  (setq y (random 100))
+  (should (equal (* x y) (read (skeletor--replace-all nil "__(* x y)__")))))
 
 ;;; Integration tests
 
@@ -163,6 +165,6 @@
   (should skeletor-project-spec)
   (should (-alist? skeletor-project-spec)))
 
-(provide 'skeletor-tests)
+(provide 'skeletor-test)
 
-;;; skeletor-tests.el ends here
+;;; skeletor-test.el ends here

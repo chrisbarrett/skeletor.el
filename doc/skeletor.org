@@ -8,11 +8,13 @@
 #+TEXINFO_DIR_DESC: Provides project templates for Emacs
 
 * README                                                           :noexport:
+
 This file is used to generate the info manual for Skeletor. It will be
 automatically built by the `doc` task in the makefile. This requires org-mode
 8.0 or later for the texinfo exporter.
 
 * Overview
+
 Skeletor provides project templates for Emacs. It also automates the mundane
 parts of setting up a new project like version control, licenses and tooling.
 
@@ -28,10 +30,10 @@ Skeletor comes with predefined project types so it is useful out-of-the-box:
 Skeletor is designed to be extensible so you can create your own templates.
 
 * Installation
+
 Skeletor is available on [[http://melpa.milkbox.net][MELPA]]. This is the easiest way to install.
 
-** MELPA Installation
-Add the following to your init.el:
+If have not already set up MELPA, add the following to your =init.el=:
 
 #+begin_src emacs-lisp
 (require 'package)
@@ -43,38 +45,14 @@ Add the following to your init.el:
 (package-initialize)
 #+end_src
 
-Run the following to install Skeletor:
+Execute the following command in Emacs to install Skeletor:
 
 #+begin_example
 M-x package-install skeletor
 #+end_example
 
-** Manual installation
-You will need Emacs 24+, =make= and [[https://github.com/cask/cask][Cask]] to build the project. You will also
-need to configure MELPA to install dependencies.
-
-Add the following to your init.el:
-
-#+begin_src emacs-lisp
-(require 'package)
-(add-to-list 'package-archives
-             '("melpa" . "http://melpa.milkbox.net/packages/") t)
-(when (< emacs-major-version 24)
-  ;; For important compatibility libraries like cl-lib
-  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
-(package-initialize)
-#+end_src
-
-Then run the following in the shell to clone Skeletor and install it.
-
-#+begin_src sh
-cd
-git clone git@github.com:chrisbarrett/skeletor.el.git
-cd skeletor
-make && make install
-#+end_src
-
 * Usage
+
 Use =M-x skeletor-create-project= to create a new project based on an existing template.
 You will be guided through any configuration needed.
 
@@ -91,6 +69,7 @@ project template, called a /skeleton/, or you can use an external tool to create
 the project and use Skeletor to perform additional configuration.
 
 ** Project Skeletons
+
 Project skeletons are templates for constructing new projects. The following
 discussion will use the terms /skeleton/ and /template/ interchangeably.
 
@@ -98,6 +77,7 @@ There are two parts to defining a new project skeleton, discussed in the
 following sections.
 
 *** Creating a Skeleton Directory
+
 Skeletor uses physical files and directories to represent project templates.
 When you create a project, Skeletor will copy the template directory and apply
 certain transformations.
@@ -127,6 +107,7 @@ Note that Skeletor will handle the creation of a license file itself, so you
 should not add one to your skeleton.
 
 *** Configuring the Skeleton
+
 Once you have created a project skeleton, use the =skeletor-define-template=
 macro to configure how the project template will be created.
 
@@ -230,6 +211,7 @@ template. It will display a help window with download links if either of them
 cannot be found.
 
 ** Substitutions
+
 Skeletor can perform text substitutions when it creates new projects. This makes
 it possible to refer to the name of the project, add time-stamps and customise
 the contents of files according to user input when a project is created.
@@ -303,6 +285,7 @@ This will prompt you to enter a description when creating an instance of this
 project.
 
 *** Embedded Elisp
+
 Template files may contain embedded Elisp expressions that will be evaluated
 when the project is created. The expression will be replaced by its result. The
 syntax is =__(expression)__=.
@@ -330,27 +313,59 @@ Skeletor provides the =skeletor-define-constructor= macro for this purpose. It
 is similar to =skeletor-define-template=, but it requires you supply a function
 that creates the project structure itself.
 
-For example, [[http://bundler.io][Bundler]] is a popular tool in the Ruby community that can create new
-Ruby projects. Skeletor provides the following binding:
+=skeletor-define-constructor= has a required =:initialise= keyword parameter, which
+must be a unary function. This function is passed the raw alist that represents
+the template to be constructed. You can do whatever you want in =initialise=,
+provided you create the destination directory.
+
+As an example, [[http://bundler.io][Bundler]] is a popular tool in the Ruby community that can create
+new Ruby projects. Skeletor provides the following binding:
 
 #+begin_src elisp
-(skeletor-define-constructor "Ruby Gem"
-  :requires-executables '(("bundle" . "http://bundler.io"))
-  :no-license? t
-
-  :initialise
-  (lambda (name project-dir)
-    (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument name))))
-
-  :after-creation
-  (lambda (dir)
-    (when (and (executable-find "rspec")
-               (y-or-n-p "Create RSpec test suite? "))
-      (skeletor-shell-command "rspec --init"))))
+  (skeletor-define-constructor "Ruby Gem"
+    :requires-executables '(("bundle" . "http://bundler.io"))
+    :no-license? t
+    :initialise
+    (lambda (spec)
+      (let-alist spec
+        (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument .project-name))
+                                .project-dir)))
+    :before-git
+    (lambda (dir)
+      (when (and (executable-find "rspec")
+                 (y-or-n-p "Create RSpec test suite? "))
+        (skeletor-shell-command "rspec --init"))))
 #+end_src
 
 Skeletor will use =bundle= to create the project structure, offer to create an
 RSpec test suite, then add everything to version control.
+
+* Development
+
+You will need Emacs 24+, =make= and [[https://github.com/cask/cask][Cask]] to build the project. You will also
+need to configure MELPA to install dependencies.
+
+Add the following to your init.el:
+
+#+begin_src emacs-lisp
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(when (< emacs-major-version 24)
+  ;; For important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+(package-initialize)
+#+end_src
+
+Then run the following in the shell to clone Skeletor and install it.
+
+#+begin_src sh
+cd
+git clone git@github.com:chrisbarrett/skeletor.el.git
+cd skeletor
+make && make install
+#+end_src
+
 * Acknowledgements
 Skeletor is based on [[https://twitter.com/magnars][@magnars]]' Project Archetypes--one of many cool features of
 his [[https://github.com/magnars/.emacs.d][.emacs.d]]. This, and other goodies, are covered in [[http://sachachua.com/blog/2013/11/emacs-chat-magnar-sveen-emacs-rocks/][this chat session]] with

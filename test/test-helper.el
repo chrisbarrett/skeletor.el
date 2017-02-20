@@ -67,6 +67,4 @@ Elements are compared using `equal'."
           (skeletor-user-directory this-dir))
      ,@body))
 
-(provide 'test-helper)
-
 ;;; test-helper.el ends here

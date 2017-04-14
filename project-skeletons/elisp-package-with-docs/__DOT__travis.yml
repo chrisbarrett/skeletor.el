@@ -20,7 +20,7 @@ matrix:
 script:
   - emacs --version
   - make info
-  - make test
+  - make check
 
 addons:
   apt:

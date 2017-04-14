@@ -23,6 +23,8 @@
 
 ;;; Code:
 
+(declare-function undercover "undercover")
+
 (when (require 'undercover nil t)
   (undercover "__PROJECT-NAME__.el"))
 

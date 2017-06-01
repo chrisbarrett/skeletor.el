@@ -14,4 +14,6 @@ tooling : $(VIRTUALENV)
 	pip install jedi
 	pip install epc
 	pip install pylint
-	pip install pymacs
+	pip install -e "git+https://github.com/pinard/Pymacs.git#egg=Pymacs"
+	cd $VIRTUAL_ENV/src/pymacs
+	make

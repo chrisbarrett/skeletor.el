@@ -23,7 +23,7 @@
 
 ;;; Commentary:
 
-;; Skeletor provides project templates for Emacs. It also automates the
+;; Skeletor provides project templates for Emacs.  It also automates the
 ;; mundane parts of setting up a new project like version control, licenses
 ;; and tooling.
 
@@ -427,7 +427,7 @@ skeleton.")
   (SkeletorTemplate path (f-files path nil t) (f-directories path nil t)))
 
 ;; [(String,String)], FilePath -> SkeletorExpansionSpec
-(defun skeletor--expand-template-paths (substitutions dest template)
+(defun skeletor--expand-template-paths (substitutions dest eval-embedded-elisp? template)
   "Expand all file and directory names in a template.
 Return a SkeletorExpansionSpec.
 
@@ -435,13 +435,17 @@ Return a SkeletorExpansionSpec.
 
 * DEST is the destination path for the template.
 
+* EVAL-EMBEDDED-ELISP? is flag that indicates whether we should
+  perform embedded elisp evaluation.
+
 * TEMPLATE is a SkeletorTemplate."
   (cl-assert (stringp dest))
   (cl-assert (listp substitutions))
   (cl-assert (SkeletorTemplate-p template))
   (cl-flet ((expand (it)
                     (->> (skeletor--replace-all (cons (cons "__DOT__" ".") substitutions)
-                                                it)
+                                                it
+						eval-embedded-elisp?)
                          (s-chop-prefix (SkeletorTemplate-path template))
                          (s-prepend (s-chop-suffix (f-path-separator) dest)))))
     (SkeletorExpansionSpec
@@ -463,11 +467,14 @@ An expression has the form \"__(expr)__\"."
     (buffer-string)))
 
 ;; [(String,String)], String -> String
-(defun skeletor--replace-all (substitutions str)
+(defun skeletor--replace-all (substitutions str eval-embedded-elisp?)
   "Expand SUBSTITUTIONS in STR with fixed case.
 Like `s-replace-all' but preserves case of the case of the
-substitution."
-  (let ((expanded (skeletor--evaluate-elisp-exprs-in-string str)))
+substitution.  EVAL-EMBEDDED-ELISP? is flag that indicates whether
+we should perform embedded elisp evaluation."
+  (let ((expanded (if eval-embedded-elisp?
+		      (skeletor--evaluate-elisp-exprs-in-string str)
+		    str)))
     (if substitutions
         (replace-regexp-in-string (regexp-opt (-map 'car substitutions))
                                   (lambda (it) (cdr (assoc it substitutions)))
@@ -481,10 +488,13 @@ substitution."
   (cl-assert (--all? (stringp (cdr it)) alist)))
 
 ;; [(String,String)], SkeletorExpansionSpec -> IO ()
-(defun skeletor--instantiate-spec (substitutions spec)
+(defun skeletor--instantiate-spec (substitutions  eval-embedded-elisp? spec)
   "Create an instance of the given template specification.
 
 * SUBSTITUTIONS is an alist as accepted by `s-replace-all'.
+
+* EVAL-EMBEDDED-ELISP? is flag that indicates whether we should
+  perform embedded elisp evaluation.
 
 * SPEC is a SkeletorExpansionSpec."
   (skeletor--validate-substitutions substitutions)
@@ -494,26 +504,29 @@ substitution."
   (--each (SkeletorExpansionSpec-files spec)
     (cl-destructuring-bind (src . dest) it
       (f-touch dest)
-      (f-write (skeletor--replace-all substitutions (f-read src))
+      (f-write (skeletor--replace-all substitutions (f-read src) eval-embedded-elisp?)
                'utf-8 dest))))
 
 ;; [(String,String)], FilePath, FilePath -> IO ()
-(defun skeletor--instantiate-skeleton-dir (substitutions src dest)
+(defun skeletor--instantiate-skeleton-dir (substitutions src dest eval-embedded-elisp?)
   "Create an instance of a project skeleton.
 
 * SUBSTITUTIONS is an alist as accepted by `s-replace-all'.
 
 * SRC is the path to the template directory.
 
-* DEST is the destination path for the template."
+* DEST is the destination path for the template.
+
+* EVAL-EMBEDDED-ELISP? is flag that indicates whether we should
+  perform embedded elisp evaluation."
   (skeletor--validate-substitutions substitutions)
   (cl-assert (stringp src))
   (cl-assert (f-exists? src))
   (cl-assert (stringp dest))
   (make-directory dest t)
   (->> (skeletor--dir->SkeletorTemplate src)
-       (skeletor--expand-template-paths substitutions dest)
-       (skeletor--instantiate-spec substitutions)))
+       (skeletor--expand-template-paths substitutions dest eval-embedded-elisp?)
+       (skeletor--instantiate-spec substitutions eval-embedded-elisp?)))
 
 ;; FilePath -> IO ()
 (defun skeletor--initialize-git-repo  (dir)
@@ -529,15 +542,18 @@ substitution."
     (message "Initialising git...done")))
 
 ;; FilePath, FilePath, [(String,String)] -> IO ()
-(defun skeletor--instantiate-license-file (license-file dest substitutions)
+(defun skeletor--instantiate-license-file (license-file dest substitutions eval-embedded-elisp?)
   "Populate the given license file template.
 
 * LICENSE-FILE is the path to the template license file.
 
 * DEST is the path it will be copied to.
 
-* SUBSTITUTIONS is an alist passed to `skeletor--replace-all'."
-  (f-write (skeletor--replace-all substitutions (f-read license-file)) 'utf-8 dest))
+* SUBSTITUTIONS is an alist passed to `skeletor--replace-all'.
+
+* EVAL-EMBEDDED-ELISP? is flag that indicates whether we should
+  perform embedded elisp evaluation."
+  (f-write (skeletor--replace-all substitutions (f-read license-file) eval-embedded-elisp?) 'utf-8 dest))
 
 ;; FilePath -> IO ()
 (defun skeletor--show-project (dest)
@@ -664,7 +680,10 @@ Otherwise immediately initialise git."
   expressing programs needed to expand this skeleton. See
   `skeletor-require-executables'.
 
-\(fn NAME &key TITLE SUBSTITUTIONS BEFORE-GIT AFTER-CREATION NO-LICENSE? DEFAULT-LICENSE LICENSE-FILE-NAME REQUIRES-EXECUTABLES)"
+* When NO-EVAL-EMBEDDED-ELISP? is t, embedded elisp won't be evaluated
+  inside template files.
+
+\(fn NAME &key TITLE SUBSTITUTIONS BEFORE-GIT AFTER-CREATION NO-LICENSE? DEFAULT-LICENSE LICENSE-FILE-NAME REQUIRES-EXECUTABLES NO-EVAL-EMBEDDED-ELISP?)"
   (declare (indent 1))
   (-let [(name . keys) args]
     `(skeletor-define-constructor ,name
@@ -727,7 +746,10 @@ This can be used to add bindings for command-line tools.
   expressing programs needed to expand this skeleton. See
   `skeletor-require-executables'.
 
-\(fn TITLE &key INITIALISE SUBSTITUTIONS BEFORE-GIT AFTER-CREATION NO-GIT? NO-LICENSE? DEFAULT-LICENSE LICENSE-FILE-NAME REQUIRES-EXECUTABLES)"
+* When NO-EVAL-EMBEDDED-ELISP? is t, embedded elisp won't be evaluated
+  inside template files.
+
+\(fn TITLE &key INITIALISE SUBSTITUTIONS BEFORE-GIT AFTER-CREATION NO-GIT? NO-LICENSE? DEFAULT-LICENSE LICENSE-FILE-NAME REQUIRES-EXECUTABLES NO-EVAL-EMBEDDED-ELISP?)"
   (declare (indent 1))
   (-let* ((spec-alist (skeletor--process-macro-args args))
           ((&alist 'default-license-var default-license-var
@@ -768,7 +790,8 @@ This can be used to add bindings for command-line tools.
               (cons 'license-file-name (or .license-file-name "COPYING"))
               (cons 'default-license-var (intern (format "%s-default-license" name)))
               (cons 'substitutions (eval .substitutions))
-              (cons 'required-executables (eval .requires-executables))))))
+              (cons 'required-executables (eval .requires-executables))
+              (cons 'eval-embedded-elisp? (not .no-eval-embedded-elisp?))))))
 
   (defun skeletor--plist-to-alist (plist)
     "Convert PLIST to an alist, replacing keyword keys with symbols."
@@ -800,7 +823,8 @@ This can be used to add bindings for command-line tools.
 
   (defvar skeletor--legal-keys
     '(title initialise before-git after-creation no-git? no-license?
-            default-license license-file-name requires-executables substitutions))
+            default-license license-file-name requires-executables substitutions
+	    no-eval-embedded-elisp?))
 
   (defun skeletor--alist-keys-are-all-legal? (alist)
     (null (-difference (skeletor--alist-keys alist) skeletor--legal-keys)))
@@ -866,10 +890,10 @@ This can be used to add bindings for command-line tools.
     (let-alist spec
       (unless (f-exists? skeletor-project-directory)
         (make-directory skeletor-project-directory t))
-      (skeletor--instantiate-skeleton-dir .repls .skeleton .dest)
+      (skeletor--instantiate-skeleton-dir .repls .skeleton .dest .eval-embedded-elisp?)
       (when .license-file
         (skeletor--instantiate-license-file
-         .license-file (f-join .dest .license-file-name) .repls))))
+         .license-file (f-join .dest .license-file-name) .repls .eval-embedded-elisp?))))
 
   (defun skeletor--get-named-skeleton (name)
     (-first 'f-exists?

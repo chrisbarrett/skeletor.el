@@ -964,6 +964,7 @@ SKELETON is a SkeletorProjectType."
         (f-files it (lambda (f)
                       (s-matches? (rx "pip" (* (any digit "." "-")) eol)
                                   f))))
+
        (funcall skeletor-completing-read-function "PYPI binary: ")))
 
 (skeletor-define-template "python-library"

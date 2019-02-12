@@ -948,11 +948,32 @@ SKELETON is a SkeletorProjectType."
                                   f))))
        (funcall skeletor-completing-read-function "Python binary: ")))
 
+(defun skeletor-py--read-virtualenv-bin ()
+  "Read a python virtualenv binary from the user."
+  (->> skeletor-python-bin-search-path
+       (--mapcat
+        (f-files it (lambda (f)
+                      (s-matches? (rx "virtualenv" (* (any digit "." "-")) eol)
+                                  f))))
+       (funcall skeletor-completing-read-function "VirtualEnv binary: ")))
+
+(defun skeletor-py--read-pip-bin ()
+  "Read a python pip binary from the user."
+  (->> skeletor-python-bin-search-path
+       (--mapcat
+        (f-files it (lambda (f)
+                      (s-matches? (rx "pip" (* (any digit "." "-")) eol)
+                                  f))))
+
+       (funcall skeletor-completing-read-function "PYPI binary: ")))
+
 (skeletor-define-template "python-library"
   :title "Python Library"
-  :requires-executables '(("make" . "http://www.gnu.org/software/make/")
-                          ("virtualenv" . "http://www.virtualenv.org"))
-  :substitutions '(("__PYTHON-BIN__" . skeletor-py--read-python-bin))
+  :requires-executables '(("make" . "http://www.gnu.org/software/make/"))
+  :substitutions '(("__PYTHON-BIN__" . skeletor-py--read-python-bin)
+                   ("__VENV-BIN__" . skeletor-py--read-virtualenv-bin)
+                   ("__PIP-BIN__" . skeletor-py--read-pip-bin)
+                   ("__VENV-DIR__" . (lambda () (read-string "Root directory for the Python Virtual Environments: "))))
   :after-creation
   (lambda (dir)
     (skeletor-async-shell-command "make tooling")))

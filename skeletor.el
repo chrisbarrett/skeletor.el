@@ -201,7 +201,7 @@ internally and is subject to change.")
 ;;; -------------------------- Public Utilities --------------------------------
 
 (defun skeletor-shell-command (command &optional dir)
-  "Enque a shell command for this project, raising an error on a non-zero exit code.
+  "Enqueue a shell command for this project, raising an error on a non-zero exit code.
 
 * COMMAND is the shell command to execute.
 

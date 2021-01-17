@@ -1,4 +1,5 @@
 # Generated files
+*~
 *.elc
 *-pkg.el
 *.tar

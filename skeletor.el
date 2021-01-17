@@ -448,7 +448,7 @@ Return a SkeletorExpansionSpec.
      (--map (cons it (expand it)) (SkeletorTemplate-files template))
      (--map (cons it (expand it)) (SkeletorTemplate-dirs template)))))
 
-(defun skeletor--evaluate-elisp-exprs-in-string (str)
+(defun skeletor--evaluate-elisp-exprs-in-string (str subs)
   "Evaluate any elisp expressions in string STR.
 An expression has the form \"__(expr)__\"."
   (with-temp-buffer
@@ -459,7 +459,9 @@ An expression has the form \"__(expr)__\"."
         (with-demoted-errors "Error: %s"
           (replace-match
            (save-match-data
-             (format "%s" (eval (read (match-string 1))))) t))))
+             (format "%s" (eval (read (match-string 1))
+                                `((subs . ,subs)))))
+           t))))
     (buffer-string)))
 
 ;; [(String,String)], String -> String
@@ -467,7 +469,7 @@ An expression has the form \"__(expr)__\"."
   "Expand SUBSTITUTIONS in STR with fixed case.
 Like `s-replace-all' but preserves case of the case of the
 substitution."
-  (let ((expanded (skeletor--evaluate-elisp-exprs-in-string str)))
+  (let ((expanded (skeletor--evaluate-elisp-exprs-in-string str substitutions)))
     (if substitutions
         (replace-regexp-in-string (regexp-opt (-map 'car substitutions))
                                   (lambda (it) (cdr (assoc it substitutions)))

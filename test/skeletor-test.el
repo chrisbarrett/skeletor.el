@@ -47,8 +47,13 @@
 
 (defconst default-project-name (md5 (number-to-string (random))))
 
+(defconst no-eval-embedded-elisp? nil)
+
+(defconst eval-embedded-elisp? (not no-eval-embedded-elisp?))
+
 (defconst spec-instance (skeletor--expand-template-paths test-substitutions
                                                          destination-path
+                                                         eval-embedded-elisp?
                                                          template-instance))
 
 ;;; Template parsing and transformations
@@ -97,18 +102,18 @@
   (let* ((token "__REPL__")
          (expected "test TEST tEsT")
          (substitutions (list (cons token expected))))
-    (should (equal expected (skeletor--replace-all substitutions token)))))
+    (should (equal expected (skeletor--replace-all substitutions token eval-embedded-elisp?)))))
 
 (ert-deftest substitutions-are-idempotent-when-no-tokens-in-alist ()
   (let ((input (symbol-name (cl-gensym))))
-    (should (equal input (skeletor--replace-all nil input)))))
+    (should (equal input (skeletor--replace-all nil input eval-embedded-elisp?)))))
 
 (ert-deftest evaluates-embedded-elisp-in-file-templates ()
   ;; Need test variables in dynamic scope here, as let-bound variables are out
   ;; of scope in `skeletor--replace-all'.
   (setq x (random 100))
   (setq y (random 100))
-  (should (equal (* x y) (read (skeletor--replace-all nil "__(* x y)__")))))
+  (should (equal (* x y) (read (skeletor--replace-all nil "__(* x y)__" eval-embedded-elisp?)))))
 
 ;;; Integration tests
 

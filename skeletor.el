@@ -1077,16 +1077,20 @@ SRC-DIR is the path to the project src directory."
 (skeletor-define-constructor "Ruby Gem"
   :requires-executables '(("bundle" . "http://bundler.io"))
   :no-license? t
+  :no-license? t
   :initialise
   (lambda (spec)
     (let-alist spec
-      (skeletor-shell-command (format "bundle gem %s" (shell-quote-argument .project-name))
-                              .project-dir)))
-  :before-git
-  (lambda (dir)
-    (when (and (executable-find "rspec")
-               (y-or-n-p "Create RSpec test suite? "))
-      (skeletor-shell-command "rspec --init"))))
+      (let ((flags (list
+                    "--no-coc" ;; code of conduct
+                    (concat "--test=" (shell-quote-argument
+                                       (funcall skeletor-completing-read-function
+                                                "Testing framework: " '("minitest" "rspec"))))
+                    (concat "--" (unless (yes-or-no-p "Apply an MIT License") "no-") "mit"))))
+        (skeletor-shell-command (format "bundle gem %s %s"
+                                        (string-join flags " ")
+                                        (shell-quote-argument .project-name))
+                                .project-dir)))))
 
 (defvar skeletor-clj--project-types-cache nil
   "A list of strings representing the available Leiningen templates.")

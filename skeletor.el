@@ -921,6 +921,13 @@ SKELETON is a SkeletorProjectType."
 (skeletor-define-template "generic"
   :title "Generic Project")
 
+(skeletor-define-template "racket-project"
+  :title "Racket Project"
+  :substitutions
+  '(("__DESCRIPTION__"
+     . (lambda ()
+         (read-string "Description: ")))))
+
 (skeletor-define-template "elisp-package"
   :title "Elisp Package"
   :requires-executables '(("make" . "http://www.gnu.org/software/make/")

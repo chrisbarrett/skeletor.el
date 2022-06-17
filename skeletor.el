@@ -68,7 +68,7 @@ skeleton."
   "Used in template expansions to set the user organisation."
   :group 'skeletor
   :type '(choice (const :tag "None" nil)
-                 (string :tag "Value")))
+          (string :tag "Value")))
 
 (defcustom skeletor-project-directory (f-join (getenv "HOME") "Projects")
   "The directory where new projects will be created."
@@ -90,7 +90,7 @@ where 'candidate' will be replaced with 'substitution'.
 evaluated or a function that will be called."
   :group 'skeletor
   :type '(alist :key-type 'string
-                :value-type (choice string variable function)))
+          :value-type (choice string variable function)))
 
 (defcustom skeletor-init-with-git (executable-find "git")
   "When non-nil, initialise newly created projects with a git repository."
@@ -108,7 +108,7 @@ argument."
   "Function to be called when requesting input from the user."
   :group 'skeletor
   :type '(radio (function-item completing-read)
-                (function :tag "Other")))
+          (function :tag "Other")))
 
 (defcustom skeletor-after-project-instantiated-hook nil
   "Hook run after a project is successfully instantiated.
@@ -288,11 +288,11 @@ download instructions."
             "could not be found.\n\n"
             "See each item below for installation instructions.\n"))
           (-each not-found (-lambda ((program . url))
-                             (let ((inhibit-read-only t))
-                               (insert "\n - ")
-                               (insert-button program
-                                              'action (lambda (x) (browse-url (button-get x 'url)))
-                                              'url url)))))))
+                               (let ((inhibit-read-only t))
+                                 (insert "\n - ")
+                                 (insert-button program
+                                                'action (lambda (x) (browse-url (button-get x 'url)))
+                                                'url url)))))))
     (user-error "Cannot find executable(s) needed to create project")))
 
 ;;; ----------------------------- Internal -------------------------------------
@@ -390,7 +390,7 @@ skeleton.")
   "The directory containing license files for projects.")
 
 (cl-defstruct (SkeletorTemplate
-               (:constructor SkeletorTemplate (path files dirs)))
+                (:constructor SkeletorTemplate (path files dirs)))
   "Represents a project template.
 
 * PATH is the path to this project template.
@@ -401,7 +401,7 @@ skeleton.")
   path files dirs)
 
 (cl-defstruct (SkeletorExpansionSpec
-               (:constructor SkeletorExpansionSpec (files dirs)))
+                (:constructor SkeletorExpansionSpec (files dirs)))
   "Represents a project template with expanded filenames.
 
 * DIRS is a list of conses, where the car is a path to a dir in
@@ -413,7 +413,7 @@ skeleton.")
   files dirs)
 
 (cl-defstruct (SkeletorProjectType
-               (:constructor SkeletorProjectType (title constructor)))
+                (:constructor SkeletorProjectType (title constructor)))
   "Represents a project type that can be created by the user.
 
 * TITLE is the string representation of the template to be shown
@@ -441,10 +441,10 @@ Return a SkeletorExpansionSpec.
   (cl-assert (listp substitutions))
   (cl-assert (SkeletorTemplate-p template))
   (cl-flet ((expand (it)
-                    (->> (skeletor--replace-all (cons (cons "__DOT__" ".") substitutions)
-                                                it)
-                         (s-chop-prefix (SkeletorTemplate-path template))
-                         (s-prepend (s-chop-suffix (f-path-separator) dest)))))
+              (->> (skeletor--replace-all (cons (cons "__DOT__" ".") substitutions)
+                                          it)
+                   (s-chop-prefix (SkeletorTemplate-path template))
+                   (s-prepend (s-chop-suffix (f-path-separator) dest)))))
     (SkeletorExpansionSpec
      (--map (cons it (expand it)) (SkeletorTemplate-files template))
      (--map (cons it (expand it)) (SkeletorTemplate-dirs template)))))
@@ -620,13 +620,13 @@ Otherwise immediately initialise git."
   (let* ((name (funcall skeletor--read-project-name-fn prompt))
          (dest (f-join skeletor-project-directory name)))
     (cond
-     ((s-blank? name)
-      (skeletor--read-project-name))
-     ((f-exists? dest)
-      (skeletor--read-project-name
-       (format "%s already exists. Choose a different name: " dest)))
-     (t
-      name))))
+      ((s-blank? name)
+       (skeletor--read-project-name))
+      ((f-exists? dest)
+       (skeletor--read-project-name
+        (format "%s already exists. Choose a different name: " dest)))
+      (t
+       name))))
 
 
 ;;; --------------------- Public Commands and Macros ---------------------------
@@ -775,8 +775,8 @@ This can be used to add bindings for command-line tools.
     "Convert PLIST to an alist, replacing keyword keys with symbols."
     (->> (-partition-in-steps 2 2 plist)
          (-map (-lambda ((k v))
-                 (cons (intern (s-chop-prefix ":" (symbol-name k)))
-                       v)))))
+                   (cons (intern (s-chop-prefix ":" (symbol-name k)))
+                    v)))))
 
   (defun skeletor--validate-macro-arguments (name args)
     (cl-assert (skeletor--alist-keys-are-all-legal? args)  t)
@@ -801,7 +801,7 @@ This can be used to add bindings for command-line tools.
 
   (defvar skeletor--legal-keys
     '(title initialise before-git after-creation no-git? no-license?
-            default-license license-file-name requires-executables substitutions))
+      default-license license-file-name requires-executables substitutions))
 
   (defun skeletor--alist-keys-are-all-legal? (alist)
     (null (-difference (skeletor--alist-keys alist) skeletor--legal-keys)))
@@ -921,12 +921,11 @@ SKELETON is a SkeletorProjectType."
 (skeletor-define-template "generic"
   :title "Generic Project")
 
-(skeletor-define-template "racket-project"
-  :title "Racket Project"
+(skeletor-define-template "single-collection-racket-package"
+  :title "Single Collection Racket Package"
   :substitutions
-  '(("__DESCRIPTION__"
-     . (lambda ()
-         (read-string "Description: ")))))
+  '(("__DESCRIPTION__" . (lambda () (read-string "Description: ")))
+    ("__AUTHORS__"     . (lambda () (read-string "Authors:")))))
 
 (skeletor-define-template "elisp-package"
   :title "Elisp Package"
